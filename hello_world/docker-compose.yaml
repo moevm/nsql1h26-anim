@@ -3,7 +3,7 @@ services:
     image: neo4j:2026.01.4-community
     environment:
       - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
-      - NEO4J_PLUGINS=['apoc','bloom']
+      - NEO4J_PLUGINS=["apoc", "bloom"]
     ports:
       - "7474:7474"
       - "7687:7687"
@@ -12,11 +12,18 @@ services:
       - neo4j_logs:/logs
       - neo4j_plugins:/plugins
       - neo4j_import:/import
-    
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "RETURN 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
   backend:
     build: ./backend
     depends_on:
-      - neo4j
+      neo4j:
+        condition: service_healthy
     environment:
       NEO4J_URI: ${NEO4J_URI}
       NEO4J_USER: neo4j

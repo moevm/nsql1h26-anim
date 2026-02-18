@@ -20,51 +20,54 @@ class Neo4jExample:
     def write_data(self):
         with self.driver.session() as session:
             queries = [
-                "CREATE (p:Person {name: 'Ivan', age: 30, city: 'Moscow'})",
-                "CREATE (p:Person {name: 'Maria', age: 25, city: 'St. Petersburg'})",
-                "CREATE (p:Person {name: 'Petr', age: 35, city: 'Moscow'})"
+                "CREATE (u:User {name: 'Ivan', email: 'ivan@mail.ru', city: 'Москва'})",
+                "CREATE (u:User {name: 'Maria', email: 'maria@yandex.ru', city: 'Санкт-Петербург'})",
+                "CREATE (u:User {name: 'Petr', email: 'petr192@mail.ru', city: 'Москва'})",
+                "CREATE (u:User {name: 'Vladislav', email: 'vladislav07@mail.ru', city: 'Владивосток'})",
+
+                "CREATE (a:Animal {id: 1, species: 'Лиса обыкновенная', latin: 'Vulpes vulpes', category: 'Млекопитающие', endangered: false})",
+                "CREATE (a:Animal {id: 2, species: 'Белый аист', latin: 'Ciconia ciconia', category: 'Птицы', endangered: false})",
+                "CREATE (a:Animal {id: 3, species: 'Амурский тигр', latin: 'Panthera tigris altaica', category: 'Млекопитающие', endangered: true})",
+                "CREATE (a:Animal {id: 4, species: 'Бурый медведь', latin: 'Ursus arctos', category: 'Млекопитающие', endangered: false})",
+                "CREATE (a:Animal {id: 5, species: 'Орлан-белохвост', latin: 'Haliaeetus albicilla', category: 'Птицы', endangered: false})"
             ]
             for query in queries:
                 session.run(query)
     
-    def read_data(self):
+    def read_users(self):
         with self.driver.session() as session:
             result = session.run(
-                "MATCH (p:Person) RETURN p.name AS name, p.age AS age, p.city AS city ORDER BY p.name"
+                "MATCH (u:User) RETURN u.name AS name, u.email AS email, u.city AS city ORDER BY u.name"
             )
             records = list(result)
-            for record in records:
-                logger.info(f"{record['name']}, {record['age']}, {record['city']}")
+            logger.info("\n---- Users ----")
+            for r in records:
+                logger.info(f"{r['name']} | {r['email']} | {r['city']}")
             return records
     
-    def read_moscow_only(self):
+    def read_animals(self):
         with self.driver.session() as session:
             result = session.run(
-                "MATCH (p:Person {city: 'Moscow'}) RETURN p.name AS name, p.age AS age"
+                "MATCH (a:Animal) RETURN a.species AS species, a.category AS category, a.endangered AS endangered ORDER BY a.category"
             )
             records = list(result)
-            for record in records:
-                logger.info(f"{record['name']}, {record['age']}")
+            logger.info("\n---- Animals ----")
+            for r in records:
+                logger.info(f"{r['species']} | {r['category']}")
             return records
-
 
 def main():
-    uri = os.getenv("NEO4J_URI")
     user = "neo4j"
+    uri = os.getenv("NEO4J_URI")
     password = os.getenv("NEO4J_PASSWORD")
-    
+
     db = Neo4jExample(uri, user, password)
     
-    try:
-        db.clear_data()
-        db.write_data()
-        db.read_data()
-        db.read_moscow_only()
-    except Exception as e:
-        logger.error(f"Error: {e}")
-    finally:
-        db.close()
-
+    db.clear_data()
+    db.write_data()
+    db.read_users()
+    db.read_animals()
+    db.close()
 
 if __name__ == "__main__":
     main()
