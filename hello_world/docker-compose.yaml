@@ -1,0 +1,31 @@
+services:
+  neo4j:
+    image: neo4j:2026.01.4-community
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+      - NEO4J_PLUGINS=['apoc','bloom']
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_plugins:/plugins
+      - neo4j_import:/import
+    
+  backend:
+    build: ./backend
+    depends_on:
+      - neo4j
+    environment:
+      NEO4J_URI: ${NEO4J_URI}
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+    ports:
+      - "5000:5000"
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_plugins:
+  neo4j_import:

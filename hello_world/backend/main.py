@@ -1,5 +1,6 @@
 from neo4j import GraphDatabase
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
@@ -48,9 +49,9 @@ class Neo4jExample:
 
 
 def main():
-    uri = "bolt://localhost:7687"
+    uri = os.getenv("NEO4J_URI")
     user = "neo4j"
-    password = "password123"
+    password = os.getenv("NEO4J_PASSWORD")
     
     db = Neo4jExample(uri, user, password)
     
@@ -67,4 +68,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
