@@ -44,4 +44,3 @@ class UserSeeder(Seeder):
     for i in range(0, self.count, self.batch_size):
       batch = users[i:i + self.batch_size]
       await session.run(query, users=batch)
-    

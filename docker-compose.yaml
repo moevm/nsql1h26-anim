@@ -1,36 +1,23 @@
 services:
   neo4j:
-    build:
-      context: ./docker/neo4j
+    image: neo4j:5-community
     environment:
-      - NEO4J_AUTH=neo4j/admin123
+      - NEO4J_AUTH=neo4j/password # add to .env
     ports:
       - "7474:7474"
       - "7687:7687"
-    volumes:
-      - ./backend/storage/neo4j/data:/data
-      - ./backend/storage/neo4j/logs:/logs
-    healthcheck:
-      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "admin123", "RETURN 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 40s
-    networks:
-      - animal_network
+    # volumes:
+      # - ./neo4j/data:/data
+      # - ./neo4j/conf:/conf
+      # - ./neo4j/logs:/logs
+      # - ./neo4j/plugins:/plugins
 
-  # backend:
-  #   build: 
-  #     context: ./docker/python
-  #   volumes:
-  #     - ./backend:/backend
-  #   env_file:
-  #     - env/.env
-  #   ports:
-  #     - "8000:8000"
-  #   networks:
-  #     - animal_network
-
-networks:
-  animal_network:
-    driver: bridge
+  backend:
+    image: ghcr.io/astral-sh/uv:debian-slim
+    expose:
+      - 8000
+    depends_on:
+      neo4j:
+        condition: service_started
+    # volumes:
+      # - ./backend:/app/backend

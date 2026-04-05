@@ -1,0 +1,30 @@
+services:
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      - NEO4J_AUTH=neo4j/password
+    ports:
+      - 7474:7474
+      - 7687:7687
+    expose:
+      - 7474
+      - 7687
+    volumes:
+      - ./:/root
+
+  postgres:
+    image: postgres:18
+    environment:
+      - POSTGRES_PASSWORD=password
+    expose:
+      - 5432
+
+  tester:
+    image: ghcr.io/astral-sh/uv:debian-slim
+    tty: true
+    entrypoint: ["/bin/bash"]
+    depends_on:
+      neo4j:
+        condition: service_started
+      postgres:
+        condition: service_started
