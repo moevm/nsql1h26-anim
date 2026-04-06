@@ -1,530 +1,394 @@
-from faker import Faker
-from uuid import uuid4
-from datetime import datetime, timezone
-import random
-
-faker = Faker()
 
 
-def seed_users(count=10000):
+def seed_users_neo(raw_users: list) -> tuple[list, str]:
     users = [
         {
-            'id': str(uuid4()),
-            'email': faker.email(),
-            'password': faker.password(),
-            'username': faker.user_name(),
-            'first_name': faker.first_name(),
-            'last_name': faker.last_name(),
-            'bio': faker.text(max_nb_chars=500),
-            'avatar_url': faker.image_url(),
-            'role': 'user',
-            'created_at': datetime.now(timezone.utc).isoformat(),
+            'id':         u['id'],
+            'email':      u['email'],
+            'username':   u['username'],
+            'password':   u['password'],
+            'role':       u['role'],
+            'first_name': u['first_name'],
+            'last_name':  u['last_name'],
+            'bio':        u['bio'],
+            'avatar_url': u['avatar_url'],
+            'location':   u['location'],
+            'created_at': u['created_at'],
         }
-        for _ in range(count)
+        for u in raw_users
     ]
+
     query = """
-    UNWIND $users AS users
-    CREATE (u:User)
-    SET u = users
+    UNWIND $users AS u
+    CREATE (n:User)
+    SET n = u
     """
+
     return users, query
 
+def seed_taxons_neo(raw_taxons: list) -> tuple[list, str]:
+    taxons = [
+        {
+            'id':        t['id'],
+            'name':      t['name'],
+            'rank':      t['rank'],
+        }
+        for t in raw_taxons
+    ]
 
-def seed_posts(count=5000):
-    statuses = ['published', 'draft', 'archived']
+    query = """
+    UNWIND $taxons AS t
+    CREATE (n:Taxon)
+    SET n = t
+    """
+
+    return taxons, query
+
+def seed_taxon_hierarchy_neo(raw_taxons: list) -> tuple[list, str]:
+    """PARENT_OF edges между таксонами по parent_id."""
+
+    edges = [
+        {'parent_id': t['parent_id'], 'child_id': t['id']}
+        for t in raw_taxons
+        if t['parent_id'] is not None
+    ]
+
+    query = """
+    UNWIND $edges AS e
+    MATCH (parent:Taxon {id: e.parent_id})
+    MATCH (child:Taxon  {id: e.child_id})
+    CREATE (parent)-[:PARENT_OF]->(child)
+    """
+
+    return edges, query
+
+def seed_posts_neo(raw_posts: list) -> tuple[list, str]:
     posts = [
         {
-            'id': str(uuid4()),
-            'description': faker.text(max_nb_chars=300),
-            'photo_url': faker.image_url(),
-            'location': faker.city(),
-            'status': random.choice(statuses),
-            'updated_at': datetime.now(timezone.utc).isoformat(),
-            'created_at': datetime.now(timezone.utc).isoformat(),
+            'id':         p['id'],
+            'title':      p['title'],
+            'content':    p['content'],
+            'image_url':  p['image_url'],
+            'location':   p['location'],
+            'created_at': p['created_at'],
+            'updated_at': p['updated_at'],
         }
-        for _ in range(count)
+        for p in raw_posts
     ]
+
     query = """
-    UNWIND $posts AS posts
-    CREATE (p:Post)
-    SET p = posts
+    UNWIND $posts AS p
+    CREATE (n:Post)
+    SET n = p
     """
+
     return posts, query
 
-
-def seed_tags(count=200):
-    tags = [
+def seed_comments_neo(raw_comments: list) -> tuple[list, str]:
+    comments = [
         {
-            'id': str(uuid4()),
-            'name': faker.word(),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-            'updated_at': datetime.now(timezone.utc).isoformat(),
+            'id':         c['id'],
+            'content':    c['content'],
+            'created_at': c['created_at'],
+            'updated_at': c['updated_at'],
         }
-        for _ in range(count)
+        for c in raw_comments
     ]
-    query = """
-    UNWIND $tags AS tags
-    MERGE (t:Tag {name: tags.name})
-    SET t = tags
-    """
-    return tags, query
-
-
-def seed_animals(count=500):
-    species_list = ['Panthera leo', 'Elephas maximus', 'Tursiops truncatus',
-                    'Gorilla gorilla', 'Ailuropoda melanoleuca', 'Canis lupus']
-    animals = [
-        {
-            'id': str(uuid4()),
-            'name': faker.first_name(),
-            'species': random.choice(species_list),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-            'updated_at': datetime.now(timezone.utc).isoformat(),
-        }
-        for _ in range(count)
-    ]
-    query = """
-    UNWIND $animals AS animals
-    CREATE (a:Animal)
-    SET a = animals
-    """
-    return animals, query
-
-
-def seed_categories(count=30):
-    classes = ['Mammalia', 'Aves', 'Reptilia', 'Amphibia', 'Actinopterygii']
-    habitats = ['forest', 'ocean', 'desert', 'grassland', 'tundra', 'wetland']
-    categories = [
-        {
-            'id': str(uuid4()),
-            'class': random.choice(classes),
-            'habitat': random.choice(habitats),
-        }
-        for _ in range(count)
-    ]
-    query = """
-    UNWIND $categories AS categories
-    CREATE (c:Category)
-    SET c = categories
-    """
-    return categories, query
-
-
-def _unique_pairs(a_ids, b_ids, count, same=False):
-    max_pairs = len(a_ids) * len(b_ids) - (len(a_ids) if same else 0)
-    count = min(count, max_pairs)
-    pairs = set()
-    while len(pairs) < count:
-        a = random.choice(a_ids)
-        b = random.choice(b_ids)
-        if same and a == b:
-            continue
-        pairs.add((a, b))
-    return list(pairs)
-
-
-def seed_follows(users, count=500000):
-    user_ids = [u['id'] for u in users]
-    follows = [
-        {
-            'follower_id': a,
-            'followee_id': b,
-            'created_at': faker.date_this_decade().isoformat(),
-        }
-        for a, b in _unique_pairs(user_ids, user_ids, count, same=True)
-    ]
-    query = """
-    UNWIND $follows AS f
-    MATCH (follower:User {id: f.follower_id})
-    MATCH (followee:User {id: f.followee_id})
-    CREATE (follower)-[:FOLLOWS {created_at: f.created_at}]->(followee)
-    """
-    return follows, query
-
-
-def seed_authored(users, posts):
-    authored = [
-        {
-            'user_id': random.choice(users)['id'],
-            'post_id': post['id'],
-        }
-        for post in posts
-    ]
-    query = """
-    UNWIND $authored AS a
-    MATCH (u:User {id: a.user_id})
-    MATCH (p:Post {id: a.post_id})
-    CREATE (u)-[:AUTHORED]->(p)
-    """
-    return authored, query
-
-
-def seed_likes(users, posts, count=200000):
-    user_ids = [u['id'] for u in users]
-    post_ids = [p['id'] for p in posts]
-    likes = [
-        {
-            'user_id': a,
-            'post_id': b,
-            'created_at': faker.date_this_decade().isoformat(),
-        }
-        for a, b in _unique_pairs(user_ids, post_ids, count)
-    ]
-    query = """
-    UNWIND $likes AS l
-    MATCH (u:User {id: l.user_id})
-    MATCH (p:Post {id: l.post_id})
-    CREATE (u)-[:LIKES {created_at: l.created_at}]->(p)
-    """
-    return likes, query
-
-
-def seed_has_tag(posts, tags, count=25000):
-    post_ids = [p['id'] for p in posts]
-    tag_ids  = [t['id'] for t in tags]
-    has_tags = [
-        {'post_id': a, 'tag_id': b}
-        for a, b in _unique_pairs(post_ids, tag_ids, count)
-    ]
-    query = """
-    UNWIND $has_tags AS ht
-    MATCH (p:Post {id: ht.post_id})
-    MATCH (t:Tag  {id: ht.tag_id})
-    CREATE (p)-[:HAS_TAG]->(t)
-    """
-    return has_tags, query
-
-
-def seed_observed(posts, animals, count=15000):
-    post_ids   = [p['id'] for p in posts]
-    animal_ids = [a['id'] for a in animals]
-    observed = [
-        {'post_id': a, 'animal_id': b}
-        for a, b in _unique_pairs(post_ids, animal_ids, count)
-    ]
-    query = """
-    UNWIND $observed AS o
-    MATCH (p:Post   {id: o.post_id})
-    MATCH (a:Animal {id: o.animal_id})
-    CREATE (p)-[:OBSERVED]->(a)
-    """
-    return observed, query
-
-
-def seed_belongs_to(animals, categories):
-    belongs = [
-        {
-            'animal_id': animal['id'],
-            'category_id': random.choice(categories)['id'],
-        }
-        for animal in animals
-    ]
-    query = """
-    UNWIND $belongs AS b
-    MATCH (a:Animal   {id: b.animal_id})
-    MATCH (c:Category {id: b.category_id})
-    CREATE (a)-[:BELONGS_TO]->(c)
-    """
-    return belongs, query
-
-
-def seed_users_sql(count=10000):
-    users = [
-        {
-            'id': str(uuid4()),
-            'locationId': faker.city(),
-            'email': faker.email(),
-            'password': faker.password(),
-            'username': faker.user_name(),
-            'role': random.choice(['user', 'admin', 'moderator']),
-            'first_name': faker.first_name(),
-            'last_name': faker.last_name(),
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-        }
-        for _ in range(count)
-    ]
-    query = """
-        INSERT INTO users (id, locationId, email, password, username, role, first_name, last_name, timestamp, created_at)
-        VALUES (%(id)s, %(locationId)s, %(email)s, %(password)s, %(username)s, %(role)s, %(first_name)s, %(last_name)s, %(timestamp)s, %(created_at)s)
-        ON CONFLICT (id) DO NOTHING
-    """
-    return users, query
-
-
-def seed_posts_sql(count=5000):
-    statuses = ['published', 'draft', 'archived']
-    posts = [
-        {
-            'id': str(uuid4()),
-            'title': faker.sentence(),
-            'text': faker.text(max_nb_chars=500),
-            'content': faker.text(max_nb_chars=1000),
-            'image_url': faker.image_url(),
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-        }
-        for _ in range(count)
-    ]
-    query = """
-        INSERT INTO posts (id, title, text, content, image_url, timestamp, created_at)
-        VALUES (%(id)s, %(title)s, %(text)s, %(content)s, %(image_url)s, %(timestamp)s, %(created_at)s)
-        ON CONFLICT (id) DO NOTHING
-    """
-    return posts, query
-
-
-def seed_tags_sql(count=200):
-    tags = [
-        {
-            'tagId': str(uuid4()),
-            'name': faker.unique.word(),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-        }
-        for _ in range(count)
-    ]
-    query = """
-        INSERT INTO tags (tagId, name, created_at)
-        VALUES (%(tagId)s, %(name)s, %(created_at)s)
-        ON CONFLICT (tagId) DO NOTHING
-    """
-    return tags, query
-
-
-def seed_animals_sql(count=500):
-    species_list = ['Panthera leo', 'Elephas maximus', 'Tursiops truncatus',
-                    'Gorilla gorilla', 'Ailuropoda melanoleuca', 'Canis lupus',
-                    'Felis catus', 'Canis familiaris', 'Equus ferus', 'Bos taurus']
-    habitats = ['forest', 'ocean', 'desert', 'grassland', 'tundra', 'wetland', 'mountain', 'savanna']
-
-    animals = [
-        {
-            'id': str(uuid4()),
-            'taxonId': str(uuid4()),
-            'species': random.choice(species_list),
-            'habitat': random.choice(habitats),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-        }
-        for _ in range(count)
-    ]
-    query = """
-        INSERT INTO animals (id, taxonId, species, habitat, created_at)
-        VALUES (%(id)s, %(taxonId)s, %(species)s, %(habitat)s, %(created_at)s)
-        ON CONFLICT (id) DO NOTHING
-    """
-    return animals, query
-
-
-def seed_categories_sql(count=30):
-    classes = ['Mammalia', 'Aves', 'Reptilia', 'Amphibia', 'Actinopterygii', 'Insecta', 'Arachnida']
-    habitats = ['forest', 'ocean', 'desert', 'grassland', 'tundra', 'wetland', 'mountain']
-
-    categories = [
-        {
-            'id': str(uuid4()),
-            'class': random.choice(classes),
-            'habitat': random.choice(habitats),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-        }
-        for _ in range(count)
-    ]
-    query = """
-        INSERT INTO categories (id, class, habitat, created_at)
-        VALUES (%(id)s, %(class)s, %(habitat)s, %(created_at)s)
-        ON CONFLICT (id) DO NOTHING
-    """
-    return categories, query
-
-
-def seed_locations_sql(users, count=1000):
-    user_ids = [u['id'] for u in users]
-    locations = [
-        {
-            'id': str(uuid4()),
-            'userid': random.choice(user_ids),
-            'name': faker.city(),
-            'coordinates': f'({random.uniform(-90, 90)}, {random.uniform(-180, 180)})',
-            'rank': random.randint(1, 10),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-        }
-        for _ in range(min(count, len(user_ids)))
-    ]
-    query = """
-        INSERT INTO locations (id, userid, name, coordinates, rank, created_at)
-        VALUES (%(id)s, %(userid)s, %(name)s, %(coordinates)s, %(rank)s, %(created_at)s)
-        ON CONFLICT (id) DO NOTHING
-    """
-    return locations, query
-
-
-def seed_posts_content_sql(count=5000):
-    posts = [
-        {
-            'id': str(uuid4()),
-            'title': faker.sentence(),
-            'text': faker.text(max_nb_chars=500),
-            'content': faker.text(max_nb_chars=1000),
-            'image_url': faker.image_url(),
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-        }
-        for _ in range(count)
-    ]
-    query = """
-        INSERT INTO posts_content (id, title, text, content, image_url, timestamp, created_at)
-        VALUES (%(id)s, %(title)s, %(text)s, %(content)s, %(image_url)s, %(timestamp)s, %(created_at)s)
-        ON CONFLICT (id) DO NOTHING
-    """
-    return posts, query
-
-
-def seed_follows_sql(users, count=500):
-    user_ids = [u['id'] for u in users]
-    follows = [
-        {
-            'followerId': a,  # кто подписывается
-            'timestamp': faker.date_this_decade().isoformat(),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-        }
-        for a, _ in _unique_pairs(user_ids, user_ids, count, same=True)
-    ]
-    query = """
-        INSERT INTO followers (followerId, timestamp, created_at)
-        VALUES (%(followerId)s, %(timestamp)s, %(created_at)s)
-    """
-    return follows, query
-
-
-def seed_authored_sql(users, posts):
-    authored = [
-        {
-            'user_id': random.choice(users)['id'],
-            'post_id': post['id'],
-        }
-        for post in posts
-    ]
-    query = """
-        UPDATE posts 
-        SET userid = %(user_id)s 
-        WHERE id = %(post_id)s
-    """
-    return authored, query
-
-
-def seed_likes_sql(users, posts, count=200):
-    user_ids = [u['id'] for u in users]
-    post_ids = [p['id'] for p in posts]
-
-    likes = [
-        {
-            'userid': a,
-            'timestamp': faker.date_this_year().isoformat(),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-        }
-        for a, _ in _unique_pairs(user_ids, post_ids, count)
-    ]
-    query = """
-        INSERT INTO likes (userid, timestamp, created_at)
-        VALUES (%(userid)s, %(timestamp)s, %(created_at)s)
-    """
-    return likes, query
-
-
-def seed_comments_sql(users, posts, count=1000):
-    user_ids = [u['id'] for u in users]
-    post_ids = [p['id'] for p in posts]
-
-    comments = []
-    for i in range(count):
-        comment = {
-            'id': str(uuid4()),
-            'userid': random.choice(user_ids),
-            'commentId': None,
-            'timestamp': faker.date_this_year().isoformat(),
-            'created_at': datetime.now(timezone.utc).isoformat(),
-        }
-        comments.append(comment)
-
-    for i in range(min(count // 10, len(comments))):
-        if i > 0:
-            parent = random.choice(comments[:i])
-            comments[i]['commentId'] = parent['id']
 
     query = """
-        INSERT INTO comments (id, userid, commentId, timestamp, created_at)
-        VALUES (%(id)s, %(userid)s, %(commentId)s, %(timestamp)s, %(created_at)s)
-        ON CONFLICT (id) DO NOTHING
+    UNWIND $comments AS c
+    CREATE (n:Comment)
+    SET n = c
     """
+
     return comments, query
 
 
-def seed_has_tag_sql(posts, tags, count=250):
-    post_ids = [p['id'] for p in posts]
-    tag_ids = [t['tagId'] for t in tags]
-
-    has_tags = [
+def seed_tags_neo(raw_tags: list) -> tuple[list, str]:
+    tags = [
         {
-            'postId': a,
-            'tagId': b,
+            'id':   t['id'],
+            'name': t['name'],
         }
-        for a, b in _unique_pairs(post_ids, tag_ids, count)
+        for t in raw_tags
+    ]
+
+    query = """
+    UNWIND $tags AS t
+    MERGE (n:Tag {name: t.name})
+    ON CREATE SET n = t
+    """
+
+    return tags, query
+
+def seed_animals_neo(raw_animals: list) -> tuple[list, str]:
+    animals = [
+        {
+            'id':         a['id'],
+            'name':       a['name'],
+            'species':    a['species'],
+            'habitat':    a['habitat'],
+            'created_at': a['created_at'],
+            'updated_at': a['updated_at'],
+        }
+        for a in raw_animals
+    ]
+
+    query = """
+    UNWIND $animals AS a
+    CREATE (n:Animal)
+    SET n = a
+    """
+
+    return animals, query
+
+def seed_animal_belonged_to_taxon_neo(raw_animals: list) -> tuple[list, str]:
+    """Animal -[:BELONGED_TO]-> Taxon"""
+    
+    edges = [
+        {'animal_id': a['id'], 'taxon_id': a['taxon_id']}
+        for a in raw_animals
     ]
     query = """
-        INSERT INTO post_tags (postId, tagId)
-        VALUES (%(postId)s, %(tagId)s)
-        ON CONFLICT (postId, tagId) DO NOTHING
+    UNWIND $edges AS e
+    MATCH (a:Animal {id: e.animal_id})
+    MATCH (t:Taxon  {id: e.taxon_id})
+    CREATE (a)-[:BELONGED_TO]->(t)
     """
-    return has_tags, query
 
+    return edges, query
 
-def seed_observed_sql(posts, animals, count=150):
-    post_ids = [p['id'] for p in posts]
-    animal_ids = [a['id'] for a in animals]
-
-    observed = [
-        {
-            'postId': a,
-            'animalId': b,
-        }
-        for a, b in _unique_pairs(post_ids, animal_ids, count)
+def seed_user_authored_post_neo(raw_posts: list) -> tuple[list, str]:
+    """User -[:AUTHORED]-> Post"""
+    
+    edges = [
+        {'user_id': p['user_id'], 'post_id': p['id']}
+        for p in raw_posts
     ]
+
     query = """
-        INSERT INTO post_animals (postId, animalId)
-        VALUES (%(postId)s, %(animalId)s)
-        ON CONFLICT (postId, animalId) DO NOTHING
+    UNWIND $edges AS e
+    MATCH (u:User {id: e.user_id})
+    MATCH (p:Post {id: e.post_id})
+    CREATE (u)-[:AUTHORED]->(p)
     """
-    return observed, query
 
+    return edges, query
 
-def seed_belongs_to_sql(animals, categories):
-    belongs = [
-        {
-            'animalId': animal['id'],
-            'categoryId': random.choice(categories)['id'],
-        }
-        for animal in animals
+def seed_post_observed_animal_neo(raw_posts: list) -> tuple[list, str]:
+    """Post -[:OBSERVED]-> Animal"""
+
+    edges = [
+        {'post_id': p['id'], 'animal_id': p['animal_id']}
+        for p in raw_posts
     ]
+
     query = """
-        INSERT INTO animal_categories (animalId, categoryId)
-        VALUES (%(animalId)s, %(categoryId)s)
-        ON CONFLICT (animalId, categoryId) DO NOTHING
+    UNWIND $edges AS e
+    MATCH (p:Post   {id: e.post_id})
+    MATCH (a:Animal {id: e.animal_id})
+    CREATE (p)-[:OBSERVED]->(a)
     """
-    return belongs, query
 
+    return edges, query
 
-def get_truncate_order():
-    return [
-        'post_tags',
-        'post_animals',
-        'animal_categories',
-        'followers',
-        'comments',
-        'likes',
-        'posts',
-        'posts_content',
-        'locations',
-        'animals',
-        'categories',
-        'tags',
-        'users'
+def seed_post_tagged_neo(raw_post_tags: list) -> tuple[list, str]:
+    """Post -[:TAGGED]-> Tag"""
+
+    query = """
+    UNWIND $edges AS e
+    MATCH (p:Post {id: e.post_id})
+    MATCH (t:Tag  {id: e.tag_id})
+    CREATE (p)-[:TAGGED {created_at: e.created_at}]->(t)
+    """
+
+    return raw_post_tags, query
+
+def seed_post_likes_neo(raw_post_likes: list) -> tuple[list, str]:
+    """User -[:LIKED]-> Post"""
+
+    query = """
+    UNWIND $edges AS e
+    MATCH (u:User {id: e.user_id})
+    MATCH (p:Post {id: e.post_id})
+    CREATE (u)-[:LIKED {created_at: e.created_at}]->(p)
+    """
+
+    return raw_post_likes, query
+
+def seed_user_authored_comment_neo(raw_comments: list) -> tuple[list, str]:
+    """User -[:AUTHORED]-> Comment"""
+    
+    edges = [
+        {'user_id': c['user_id'], 'comment_id': c['id']}
+        for c in raw_comments
     ]
+
+    query = """
+    UNWIND $edges AS e
+    MATCH (u:User    {id: e.user_id})
+    MATCH (c:Comment {id: e.comment_id})
+    CREATE (u)-[:AUTHORED]->(c)
+    """
+
+    return edges, query
+
+def seed_comment_on_post_neo(raw_comments: list) -> tuple[list, str]:
+    """Comment -[:ON]-> Post"""
+    
+    edges = [
+        {'comment_id': c['id'], 'post_id': c['post_id']}
+        for c in raw_comments
+    ]
+
+    query = """
+    UNWIND $edges AS e
+    MATCH (c:Comment {id: e.comment_id})
+    MATCH (p:Post    {id: e.post_id})
+    CREATE (c)-[:ON]->(p)
+    """
+
+    return edges, query
+
+def seed_comment_replied_neo(raw_comments: list) -> tuple[list, str]:
+    """Comment -[:REPLIED]-> Comment """
+
+    edges = [
+        {'child_id': c['id'], 'parent_id': c['parent_id']}
+        for c in raw_comments
+        if c['parent_id'] is not None
+    ]
+
+    query = """
+    UNWIND $edges AS e
+    MATCH (child:Comment  {id: e.child_id})
+    MATCH (parent:Comment {id: e.parent_id})
+    CREATE (child)-[:REPLIED]->(parent)
+    """
+
+    return edges, query
+ 
+ 
+def seed_comment_liked_neo(raw_comment_likes: list) -> tuple[list, str]:
+    """User -[:LIKED]-> Comment"""
+
+    query = """
+    UNWIND $edges AS e
+    MATCH (u:User    {id: e.user_id})
+    MATCH (c:Comment {id: e.comment_id})
+    CREATE (u)-[:LIKED {created_at: e.created_at}]->(c)
+    """
+
+    return raw_comment_likes, query
+ 
+ 
+def seed_follows_neo(raw_followers: list) -> tuple[list, str]:
+    """User -[:FOLLOWED]-> User"""
+
+    edges = [
+        {
+            'follower_id': f['follower_id'],
+            'followed_id': f['followed_id'],
+            'created_at':  f['created_at'],
+        }
+        for f in raw_followers
+    ]
+
+    query = """
+    UNWIND $edges AS e
+    MATCH (follower:User {id: e.follower_id})
+    MATCH (followed:User {id: e.followed_id})
+    CREATE (follower)-[:FOLLOWED {created_at: e.created_at}]->(followed)
+    """
+
+    return edges, query
+
+def seed_taxons_sql(raw_taxons):
+    query = """
+    INSERT INTO taxon (id, parent_id, name, rank)
+    VALUES (%(id)s, %(parent_id)s, %(name)s, %(rank)s)
+    ON CONFLICT (id) DO NOTHING
+    """
+
+    return raw_taxons, query
+
+def seed_tags_sql(raw_tags):
+    query = """
+    INSERT INTO tag (id, name)
+    VALUES (%(id)s, %(name)s)
+    ON CONFLICT (id) DO NOTHING
+    """
+
+    return raw_tags, query
+
+def seed_users_sql(raw_users):
+    query = """
+    INSERT INTO "user" (id, email, password, username, role, first_name, last_name, bio, avatar_url, created_at)
+    VALUES (%(id)s, %(email)s, %(password)s, %(username)s, %(role)s, %(first_name)s, %(last_name)s, %(bio)s, %(avatar_url)s, %(created_at)s)
+    ON CONFLICT (id) DO NOTHING
+    """
+
+    return raw_users, query
+
+def seed_animals_sql(raw_animals):
+    query = """
+    INSERT INTO animal (id, taxon_id, name, species, habitat)
+    VALUES (%(id)s, %(taxon_id)s, %(name)s, %(species)s, %(habitat)s)
+    ON CONFLICT (id) DO NOTHING
+    """
+
+    return raw_animals, query
+
+def seed_posts_sql(raw_posts):
+    query = """
+    INSERT INTO post (id, user_id, animal_id, location, title, content, image_url, created_at, updated_at)
+    VALUES (%(id)s, %(user_id)s, %(animal_id)s, %(location)s, %(title)s, %(content)s, %(image_url)s, %(created_at)s, %(updated_at)s)
+    ON CONFLICT (id) DO NOTHING
+    """
+
+    return raw_posts, query
+
+def seed_comments_sql(raw_comments):
+    query = """
+    INSERT INTO comment (id, user_id, post_id, parent_id, content, created_at, updated_at)
+    VALUES (%(id)s, %(user_id)s, %(post_id)s, %(parent_id)s, %(content)s, %(created_at)s, %(updated_at)s)
+    ON CONFLICT (id) DO NOTHING
+    """
+
+    return raw_comments, query
+
+def seed_post_tags_sql(raw_post_tags):
+    query = """
+    INSERT INTO post_tag (post_id, tag_id)
+    VALUES (%(post_id)s, %(tag_id)s)
+    ON CONFLICT DO NOTHING
+    """
+
+    return raw_post_tags, query
+
+def seed_post_likes_sql(raw_post_likes):
+    query = """
+    INSERT INTO post_like (user_id, post_id, created_at)
+    VALUES (%(user_id)s, %(post_id)s, %(created_at)s)
+    ON CONFLICT DO NOTHING
+    """
+
+    return raw_post_likes, query
+
+def seed_comment_likes_sql(raw_comment_likes):
+    query = """
+    INSERT INTO comment_like (user_id, comment_id, created_at)
+    VALUES (%(user_id)s, %(comment_id)s, %(created_at)s)
+    ON CONFLICT DO NOTHING
+    """
+
+    return raw_comment_likes, query
+
+def seed_followers_sql(raw_followers):
+    query = """
+    INSERT INTO follower (follower_id, followed_id, created_at)
+    VALUES (%(follower_id)s, %(followed_id)s, %(created_at)s)
+    ON CONFLICT DO NOTHING
+    """
+
+    return raw_followers, query

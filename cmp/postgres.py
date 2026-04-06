@@ -1,6 +1,6 @@
 import psycopg2
+from psycopg2.extras import execute_batch
 from seed import *
-
 
 class PostgresConnection:
     def __init__(self, host, user, password, port=5432):
@@ -11,203 +11,140 @@ class PostgresConnection:
             password=password,
             dbname="postgres"
         )
-        self.cursor = self.conn.cursor()
 
     def __del__(self):
-        if hasattr(self, 'cursor'):
-            self.cursor.close()
         if hasattr(self, 'conn'):
             self.conn.close()
 
-    def query(self, query, **kwargs):
-        try:
-            if kwargs and len(kwargs) == 1 and isinstance(list(kwargs.values())[0], list):
-                param_name = list(kwargs.keys())[0]
-                data_list = kwargs[param_name]
+    def query(self, query, batch=None):
+        with self.conn:
+            with self.conn.cursor() as cursor:
+                if batch:
+                    execute_batch(cursor, query, batch, page_size=1000)
+                else:
+                    cursor.execute(query)
 
-                if data_list:
-                    for data in data_list:
-                        self.cursor.execute(query, data)
-            else:
-                self.cursor.execute(query, kwargs)
-
-            self.conn.commit()
-        except Exception as e:
-            self.conn.rollback()
-            print(f"Ошибка выполнения запроса: {e}")
-            raise
-
-    def create_tables(self):
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                id VARCHAR(255) UNIQUE,
-                locationId VARCHAR(255),
-                email VARCHAR(255) UNIQUE,
-                password VARCHAR(255),
-                username VARCHAR(255) UNIQUE,
-                role VARCHAR(50),
-                first_name VARCHAR(255),
-                last_name VARCHAR(255),
-                timestamp TIMESTAMP,
-                created_at TIMESTAMP
-            )
-        """)
-
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS followers (
-                uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                followerId VARCHAR(255),
-                timestamp TIMESTAMP,
-                created_at TIMESTAMP,
-                FOREIGN KEY (followerId) REFERENCES users(id) ON DELETE CASCADE
-            )
-        """)
-
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS posts (
-                uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                id VARCHAR(255) UNIQUE,
-                userid VARCHAR(255),
-                title TEXT,
-                text TEXT,
-                content TEXT,
-                image_url TEXT,
-                timestamp TIMESTAMP,
-                created_at TIMESTAMP,
-                FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE
-            )
-        """)
-
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS comments (
-                uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                id VARCHAR(255) UNIQUE,
-                userid VARCHAR(255),
-                commentId VARCHAR(255),
-                timestamp TIMESTAMP,
-                created_at TIMESTAMP,
-                FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE,
-                FOREIGN KEY (commentId) REFERENCES comments(id) ON DELETE CASCADE
-            )
-        """)
-
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS likes (
-                id SERIAL PRIMARY KEY,
-                userid VARCHAR(255),
-                timestamp TIMESTAMP,
-                created_at TIMESTAMP,
-                FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE
-            )
-        """)
-
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS posts_content (
-                uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                id VARCHAR(255) UNIQUE,
-                userid VARCHAR(255),
-                title TEXT,
-                text TEXT,
-                content TEXT,
-                image_url TEXT,
-                timestamp TIMESTAMP,
-                created_at TIMESTAMP,
-                FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE
-            )
-        """)
-
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS locations (
-                uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                id VARCHAR(255) UNIQUE,
-                userid VARCHAR(255),
-                name VARCHAR(255),
-                coordinates POINT,
-                rank INTEGER,
-                FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE
-            )
-        """)
-
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS tags (
-                tagId VARCHAR(255) PRIMARY KEY,
-                name VARCHAR(255) UNIQUE,
-                created_at TIMESTAMP
-            )
-        """)
-
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS post_tags (
-                postId VARCHAR(255),
-                tagId VARCHAR(255),
-                PRIMARY KEY (postId, tagId),
-                FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
-                FOREIGN KEY (tagId) REFERENCES tags(tagId) ON DELETE CASCADE
-            )
-        """)
-
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS animals (
-                uid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                id VARCHAR(255) UNIQUE,
-                taxonId VARCHAR(255),
-                species VARCHAR(255),
-                habitat VARCHAR(255),
-                created_at TIMESTAMP
-            )
-        """)
-
-        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_id ON users(id)")
-        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_posts_userid ON posts(userid)")
-        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_comments_postid ON comments(id)")
-        self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_likes_userid ON likes(userid)")
-
-        self.conn.commit()
-        print("Все таблицы и связи успешно созданы")
-
-    def seed(self):
-        self.create_tables()
-
-        tables_order = ['post_tags', 'followers', 'comments', 'likes', 'posts',
-                        'posts_content', 'locations', 'animals', 'tags', 'users']
-
-        for table in tables_order:
-            try:
-                self.cursor.execute(f"TRUNCATE TABLE {table} CASCADE")
-            except:
-                pass
-        self.conn.commit()
-
-        users_data, users_query = seed_users_sql(10000)
-        self.query(users_query, users=users_data)
-
-        posts_data, posts_query = seed_posts_sql(5000)
-        self.query(posts_query, posts=posts_data)
-
-        tags_data, tags_query = seed_tags_sql(200)
-        self.query(tags_query, tags=tags_data)
-
-        animals_data, animals_query = seed_animals_sql(500)
-        self.query(animals_query, animals=animals_data)
-
-        categories_data, categories_query = seed_categories_sql(30)
-        self.query(categories_query, categories=categories_data)
-
-        follows_data, follows_query = seed_follows_sql(users_data, count=500)
-        self.query(follows_query, follows=follows_data)
-
-        authored_data, authored_query = seed_authored_sql(users_data, posts_data)
-        self.query(authored_query, authored=authored_data)
-
-        likes_data, likes_query = seed_likes_sql(users_data, posts_data, count=200)
-        self.query(likes_query, likes=likes_data)
-
-        has_tags_data, has_tags_query = seed_has_tag_sql(posts_data, tags_data, count=250)
-        self.query(has_tags_query, has_tags=has_tags_data)
-
-        observed_data, observed_query = seed_observed_sql(posts_data, animals_data, count=150)
-        self.query(observed_query, observed=observed_data)
-
-        belongs_data, belongs_query = seed_belongs_to_sql(animals_data, categories_data)
-        self.query(belongs_query, belongs=belongs_data)
+                if cursor.description:
+                    return cursor.fetchall()
+    
+    def create_table(self):
+        queries = [
+        """
+        CREATE TABLE IF NOT EXISTS taxon (
+            id UUID PRIMARY KEY,
+            parent_id UUID REFERENCES taxon(id) ON DELETE SET NULL,
+            name VARCHAR(255) NOT NULL,
+            rank VARCHAR(50)
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS tag (
+            id UUID PRIMARY KEY,
+            name VARCHAR(255) NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS "user" (
+            id UUID PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            username VARCHAR(255) UNIQUE NOT NULL,
+            role VARCHAR(50),
+            first_name VARCHAR(255),
+            last_name VARCHAR(255),
+            bio TEXT,
+            avatar_url TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS animal (
+            id UUID PRIMARY KEY,
+            taxon_id UUID REFERENCES taxon(id) ON DELETE SET NULL,
+            name VARCHAR(255),
+            species VARCHAR(255),
+            habitat VARCHAR(255)
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS follower (
+            follower_id UUID REFERENCES "user"(id) ON DELETE CASCADE,
+            followed_id UUID REFERENCES "user"(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (follower_id, followed_id)
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS post (
+            id UUID PRIMARY KEY,
+            user_id UUID REFERENCES "user"(id) ON DELETE CASCADE,
+            animal_id UUID REFERENCES animal(id) ON DELETE SET NULL,
+            location VARCHAR(255),
+            title VARCHAR(255),
+            content TEXT,
+            image_url TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS post_tag (
+            post_id UUID REFERENCES post(id) ON DELETE CASCADE,
+            tag_id UUID REFERENCES tag(id) ON DELETE CASCADE,
+            PRIMARY KEY (post_id, tag_id)
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS post_like (
+            id SERIAL PRIMARY KEY,
+            user_id UUID REFERENCES "user"(id) ON DELETE CASCADE,
+            post_id UUID REFERENCES post(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS comment (
+            id UUID PRIMARY KEY,
+            user_id UUID REFERENCES "user"(id) ON DELETE CASCADE,
+            post_id UUID REFERENCES post(id) ON DELETE CASCADE,
+            parent_id UUID REFERENCES comment(id) ON DELETE CASCADE,
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS comment_like (
+            id SERIAL PRIMARY KEY,
+            user_id UUID REFERENCES "user"(id) ON DELETE CASCADE,
+            comment_id UUID REFERENCES comment(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+        ]
+        for q in queries:
+            self.query(q)
+    
+    def create_index(self):
+        indices = [
+            "CREATE INDEX IF NOT EXISTS idx_post_user_id ON post(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_comment_post_id ON comment(post_id)",
+            "CREATE INDEX IF NOT EXISTS idx_post_like_user_id ON post_like(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_animal_taxon_id ON animal(taxon_id)",
+            "CREATE INDEX IF NOT EXISTS idx_tag_name ON tag(name)"
+        ]
+        
+        for index_query in indices:
+            self.query(index_query)
+    
+    def seed(self, data):
+        batch, q = seed_taxons_sql(data['taxon']);                  self.query(q, batch=batch)
+        batch, q = seed_tags_sql(data['tag']);                      self.query(q, batch=batch)
+        batch, q = seed_users_sql(data['user']);                    self.query(q, batch=batch)
+        batch, q = seed_animals_sql(data['animal']);                self.query(q, batch=batch)
+        batch, q = seed_posts_sql(data['post']);                    self.query(q, batch=batch)
+        batch, q = seed_comments_sql(data['comment']);              self.query(q, batch=batch)
+        batch, q = seed_post_tags_sql(data['post_tag']);            self.query(q, batch=batch)
+        batch, q = seed_post_likes_sql(data['post_like']);          self.query(q, batch=batch)        
+        batch, q = seed_comment_likes_sql(data['comment_like']);    self.query(q, batch=batch)
+        batch, q = seed_followers_sql(data['follower']);            self.query(q, batch=batch)
