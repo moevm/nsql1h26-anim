@@ -15,14 +15,13 @@ class PostgresConnection:
     def __del__(self):
         if hasattr(self, 'conn'):
             self.conn.close()
-
-    def query(self, query, batch=None):
+    def query(self, query, params=None, batch=None):
         with self.conn:
             with self.conn.cursor() as cursor:
                 if batch:
                     execute_batch(cursor, query, batch, page_size=1000)
                 else:
-                    cursor.execute(query)
+                    cursor.execute(query, params) 
 
                 if cursor.description:
                     return cursor.fetchall()
@@ -148,3 +147,83 @@ class PostgresConnection:
         batch, q = seed_post_likes_sql(data['post_like']);          self.query(q, batch=batch)        
         batch, q = seed_comment_likes_sql(data['comment_like']);    self.query(q, batch=batch)
         batch, q = seed_followers_sql(data['follower']);            self.query(q, batch=batch)
+    
+    def get_user_by_email(self, email):
+        return self.query('SELECT * FROM "user" WHERE email = %s', (email,))
+
+    def get_feed(self, limit=20):
+        return self.query('SELECT * FROM post ORDER BY created_at DESC LIMIT %s', (limit,))
+
+    def get_filtered_feed(self, animal_type, start_date, end_date):
+        query = """
+            SELECT p.* FROM post p
+            JOIN animal a ON p.animal_id = a.id
+            WHERE a.species = %s AND p.created_at BETWEEN %s AND %s
+            ORDER BY p.created_at DESC
+        """
+        return self.query(query, (animal_type, start_date, end_date))
+
+    def get_post_details(self, post_id):
+        post = self.query('SELECT * FROM post WHERE id = %s', (post_id,))
+        comments = self.query('SELECT * FROM comment WHERE post_id = %s', (post_id,))
+        return post, comments
+    
+    def get_recommendations(self, user_id):
+        query = """
+        SELECT f2.followed_id, COUNT(f1.followed_id) as score
+        FROM follower f1
+        JOIN follower f2 ON f1.followed_id = f2.follower_id
+        WHERE f1.follower_id = %s 
+          AND f2.followed_id <> %s
+          AND f2.followed_id NOT IN (SELECT followed_id FROM follower WHERE follower_id = %s)
+        GROUP BY f2.followed_id
+        ORDER BY score DESC LIMIT 10
+        """
+        return self.query(query, (user_id, user_id, user_id))
+
+    def get_taxon_tree_posts(self, taxon_name):
+        query = """
+        WITH RECURSIVE taxon_tree AS (
+            SELECT id FROM taxon WHERE name = %s
+            UNION ALL
+            SELECT t.id FROM taxon t
+            INNER JOIN taxon_tree tt ON t.parent_id = tt.id
+        )
+        SELECT p.* FROM post p
+        JOIN animal a ON p.animal_id = a.id
+        WHERE a.taxon_id IN (SELECT id FROM taxon_tree)
+        LIMIT 50
+        """
+        return self.query(query, (taxon_name,))
+    
+    def get_social_recs(self, user_id):
+        query = """
+            SELECT f2.followed_id, COUNT(*) as common_friends
+            FROM follower f1
+            JOIN follower f2 ON f1.followed_id = f2.follower_id
+            WHERE f1.follower_id = %s 
+              AND f2.followed_id != %s
+              AND f2.followed_id NOT IN (
+                  SELECT followed_id FROM follower WHERE follower_id = %s
+              )
+            GROUP BY f2.followed_id
+            ORDER BY common_friends DESC
+            LIMIT 10
+        """
+        return self.query(query, (user_id, user_id, user_id))
+
+    def get_posts_by_taxon_recursive(self, taxon_name):
+        query = """
+            WITH RECURSIVE taxon_tree AS (
+                SELECT id FROM taxon WHERE name = %s
+                UNION ALL
+                SELECT t.id FROM taxon t
+                JOIN taxon_tree tt ON t.parent_id = tt.id
+            )
+            SELECT p.* FROM post p
+            JOIN animal a ON p.animal_id = a.id
+            WHERE a.taxon_id IN (SELECT id FROM taxon_tree)
+            ORDER BY p.created_at DESC
+            LIMIT 20
+        """
+        return self.query(query, (taxon_name,))
