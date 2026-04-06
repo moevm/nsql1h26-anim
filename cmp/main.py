@@ -78,11 +78,7 @@ if __name__ == "__main__":
     current_count = benchmarks_config["medium_load"]
     data = generate_all(current_count)
     
-    print("Seeding Neo4j...")
-    # conn_neo4j.seed(data)
+    conn_neo4j.seed(data)
+    conn_postgres.seed(data)
     
-    print("Seeding Postgres...")
-    # conn_postgres.seed(data)
-
-    print("\nStarting Benchmarks...")
     run_benchmarks(conn_postgres, conn_neo4j, data)
