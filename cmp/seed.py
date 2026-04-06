@@ -5,7 +5,8 @@ import random
 
 faker = Faker()
 
-def seed_users(count):
+
+def seed_users(count=10000):
     users = [
         {
             'id': str(uuid4()),
@@ -29,7 +30,7 @@ def seed_users(count):
     return users, query
 
 
-def seed_posts(count):
+def seed_posts(count=5000):
     statuses = ['published', 'draft', 'archived']
     posts = [
         {
@@ -51,7 +52,7 @@ def seed_posts(count):
     return posts, query
 
 
-def seed_tags(count):
+def seed_tags(count=200):
     tags = [
         {
             'id': str(uuid4()),
@@ -69,7 +70,7 @@ def seed_tags(count):
     return tags, query
 
 
-def seed_animals(count):
+def seed_animals(count=500):
     species_list = ['Panthera leo', 'Elephas maximus', 'Tursiops truncatus',
                     'Gorilla gorilla', 'Ailuropoda melanoleuca', 'Canis lupus']
     animals = [
@@ -90,7 +91,7 @@ def seed_animals(count):
     return animals, query
 
 
-def seed_categories(count):
+def seed_categories(count=30):
     classes = ['Mammalia', 'Aves', 'Reptilia', 'Amphibia', 'Actinopterygii']
     habitats = ['forest', 'ocean', 'desert', 'grassland', 'tundra', 'wetland']
     categories = [
@@ -109,26 +110,29 @@ def seed_categories(count):
     return categories, query
 
 
-def seed_follows(users):
-    """User -[:FOLLOWS]-> User"""
+def _unique_pairs(a_ids, b_ids, count, same=False):
+    max_pairs = len(a_ids) * len(b_ids) - (len(a_ids) if same else 0)
+    count = min(count, max_pairs)
     pairs = set()
-    follows = []
+    while len(pairs) < count:
+        a = random.choice(a_ids)
+        b = random.choice(b_ids)
+        if same and a == b:
+            continue
+        pairs.add((a, b))
+    return list(pairs)
+
+
+def seed_follows(users, count=500000):
     user_ids = [u['id'] for u in users]
-
-    for user in users:
-        # each user follows 1..3 random others
-        targets = random.sample([uid for uid in user_ids if uid != user['id']],
-                                k=min(3, len(user_ids) - 1))
-        for target_id in targets:
-            pair = (user['id'], target_id)
-            if pair not in pairs:
-                pairs.add(pair)
-                follows.append({
-                    'follower_id': user['id'],
-                    'followee_id': target_id,
-                    'created_at': faker.date_this_decade().isoformat(),
-                })
-
+    follows = [
+        {
+            'follower_id': a,
+            'followee_id': b,
+            'created_at': faker.date_this_decade().isoformat(),
+        }
+        for a, b in _unique_pairs(user_ids, user_ids, count, same=True)
+    ]
     query = """
     UNWIND $follows AS f
     MATCH (follower:User {id: f.follower_id})
@@ -139,7 +143,6 @@ def seed_follows(users):
 
 
 def seed_authored(users, posts):
-    """User -[:AUTHORED]-> Post  (one author per post)"""
     authored = [
         {
             'user_id': random.choice(users)['id'],
@@ -156,23 +159,17 @@ def seed_authored(users, posts):
     return authored, query
 
 
-def seed_likes(users, posts):
-    """User -[:LIKES]-> Post"""
-    pairs = set()
-    likes = []
-
-    for user in users:
-        liked_posts = random.sample(posts, k=min(5, len(posts)))
-        for post in liked_posts:
-            pair = (user['id'], post['id'])
-            if pair not in pairs:
-                pairs.add(pair)
-                likes.append({
-                    'user_id': user['id'],
-                    'post_id': post['id'],
-                    'created_at': faker.date_this_decade().isoformat(),
-                })
-
+def seed_likes(users, posts, count=200000):
+    user_ids = [u['id'] for u in users]
+    post_ids = [p['id'] for p in posts]
+    likes = [
+        {
+            'user_id': a,
+            'post_id': b,
+            'created_at': faker.date_this_decade().isoformat(),
+        }
+        for a, b in _unique_pairs(user_ids, post_ids, count)
+    ]
     query = """
     UNWIND $likes AS l
     MATCH (u:User {id: l.user_id})
@@ -182,22 +179,13 @@ def seed_likes(users, posts):
     return likes, query
 
 
-def seed_has_tag(posts, tags):
-    """Post -[:HAS_TAG]-> Tag"""
-    pairs = set()
-    has_tags = []
-
-    for post in posts:
-        chosen_tags = random.sample(tags, k=min(3, len(tags)))
-        for tag in chosen_tags:
-            pair = (post['id'], tag['id'])
-            if pair not in pairs:
-                pairs.add(pair)
-                has_tags.append({
-                    'post_id': post['id'],
-                    'tag_id': tag['id'],
-                })
-
+def seed_has_tag(posts, tags, count=25000):
+    post_ids = [p['id'] for p in posts]
+    tag_ids  = [t['id'] for t in tags]
+    has_tags = [
+        {'post_id': a, 'tag_id': b}
+        for a, b in _unique_pairs(post_ids, tag_ids, count)
+    ]
     query = """
     UNWIND $has_tags AS ht
     MATCH (p:Post {id: ht.post_id})
@@ -207,22 +195,13 @@ def seed_has_tag(posts, tags):
     return has_tags, query
 
 
-def seed_observed(posts, animals):
-    """Post -[:OBSERVED]-> Animal"""
-    pairs = set()
-    observed = []
-
-    for post in posts:
-        chosen = random.sample(animals, k=min(2, len(animals)))
-        for animal in chosen:
-            pair = (post['id'], animal['id'])
-            if pair not in pairs:
-                pairs.add(pair)
-                observed.append({
-                    'post_id': post['id'],
-                    'animal_id': animal['id'],
-                })
-
+def seed_observed(posts, animals, count=15000):
+    post_ids   = [p['id'] for p in posts]
+    animal_ids = [a['id'] for a in animals]
+    observed = [
+        {'post_id': a, 'animal_id': b}
+        for a, b in _unique_pairs(post_ids, animal_ids, count)
+    ]
     query = """
     UNWIND $observed AS o
     MATCH (p:Post   {id: o.post_id})
@@ -233,7 +212,6 @@ def seed_observed(posts, animals):
 
 
 def seed_belongs_to(animals, categories):
-    """Animal -[:BELONGS_TO]-> Category"""
     belongs = [
         {
             'animal_id': animal['id'],
