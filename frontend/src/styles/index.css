@@ -1,0 +1,38 @@
+@import "./reset.css";
+@import "./fonts.css";
+
+:root {
+  --default-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --default-font-color: #1a1a1a;
+  --accent-color: #3d6b4f;
+  --bg-color: #f8f8f6;
+}
+
+body {
+  font-family: var(--default-font-family);
+  color: var(--default-font-color);
+  background-color: var(--bg-color);
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  max-width: 1440px;
+  min-width: 320px;
+  display: flex;
+  justify-content: center;
+}
+
+[data-visually-hidden="true"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
