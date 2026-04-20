@@ -14,3 +14,8 @@ dependencies = [
     "pyjwt>=2.12.1",
     "uvicorn>=0.44.0",
 ]
+
+[tool.uv.workspace]
+members = [
+    "venv",
+]

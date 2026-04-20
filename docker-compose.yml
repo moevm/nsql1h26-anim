@@ -2,22 +2,34 @@ services:
   db:
     image: neo4j:5-community
     environment:
-      - NEO4J_AUTH=db/password # add to .env
+      NEO4J_AUTH: ${NEO4J_AUTH}
     ports:
       - "7474:7474"
       - "7687:7687"
-    # volumes:
-      # - ./db/data:/data
-      # - ./db/conf:/conf
-      # - ./db/logs:/logs
-      # - ./db/plugins:/plugins
-
+    volumes:
+      - ./backend/storage:/data
+  
   backend:
     image: ghcr.io/astral-sh/uv:debian-slim
-    expose:
-      - 8000
+    tty: true
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    entrypoint: ["uv run ./src/main.py"]
     depends_on:
       db:
         condition: service_started
-    # volumes:
-      # - ./backend:/app/backend
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.frontend
+    volumes:
+      - ./frontend:/app/frontend
+      - /app/frontend/node_modules
+    ports:
+      - "5173:5173"

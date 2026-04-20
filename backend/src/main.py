@@ -9,10 +9,8 @@ from core.config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-  print("🚀 App starting...")
   await db.init_db()
   yield
-  print("🛑 App shutting down...")
   await db.close()
 
 app = FastAPI(
