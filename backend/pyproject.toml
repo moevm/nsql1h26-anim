@@ -1,14 +1,16 @@
 [project]
-name = "backend"
+name = "src"
 version = "0.1.0"
-description = "backend for project nsql1h26-anim"
+description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
-    "faker>=40.12.0",
-    "fastapi>=0.135.3",
+    "faker>=40.13.0",
+    "fastapi>=0.136.0",
     "neo4j>=6.1.0",
-    "pydantic>=2.12.5",
-    "python-dotenv>=1.2.2",
-    "uvicorn>=0.43.0",
+    "pwdlib[argon2]>=0.3.0",
+    "pydantic>=2.13.2",
+    "pydantic-settings>=2.13.1",
+    "pyjwt>=2.12.1",
+    "uvicorn>=0.44.0",
 ]
