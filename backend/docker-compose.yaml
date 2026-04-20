@@ -1,0 +1,27 @@
+services:
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: ${NEO4J_AUTH}
+    ports:
+      - 7474:7474
+      - 7687:7687
+    expose:
+      - 7474
+      - 7687
+    volumes:
+      - ./:/storage
+
+  backend:
+    image: ghcr.io/astral-sh/uv:debian-slim
+    tty: true
+    entrypoint: ["/bin/bash"]
+    depends_on:
+      neo4j:
+        condition: service_started
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
