@@ -1,0 +1,23 @@
+services:
+  db:
+    image: neo4j:5-community
+    environment:
+      - NEO4J_AUTH=db/password # add to .env
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    # volumes:
+      # - ./db/data:/data
+      # - ./db/conf:/conf
+      # - ./db/logs:/logs
+      # - ./db/plugins:/plugins
+
+  backend:
+    image: ghcr.io/astral-sh/uv:debian-slim
+    expose:
+      - 8000
+    depends_on:
+      db:
+        condition: service_started
+    # volumes:
+      # - ./backend:/app/backend
