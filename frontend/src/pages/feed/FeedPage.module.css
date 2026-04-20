@@ -1,0 +1,162 @@
+.feedWrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  align-items: center;
+  background-color: #f8faf9; /* Чуть более живой фон */
+}
+
+.mainContent {
+  width: 100%;
+  max-width: 1440px;
+  padding: 40px 24px;
+  box-sizing: border-box;
+}
+
+/* Сетка для постов как на фото */
+.postsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+}
+
+.postCard {
+  background: white;
+  border-radius: 16px; /* Чуть меньше скругление для строгости */
+  overflow: hidden; /* Чтобы картинка не вылезала */
+  border: 1px solid #eef3ef;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.postCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Имитация картинки из референса */
+.postImageStub {
+  width: 100%;
+  height: 220px;
+  background: #eee;
+  object-fit: cover;
+}
+
+.cardBody {
+  padding: 20px;
+}
+
+.authorSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.authorAvatar {
+  width: 36px;
+  height: 36px;
+  background: #4a7c66;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.authorName {
+  font-weight: 600;
+  font-size: 14px;
+  color: #2c4b3e;
+}
+
+.postDate {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.postTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a2e25;
+  margin-bottom: 10px;
+}
+
+.postDescription {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  /* Ограничение текста до 2 строк */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hashtags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.hashtag {
+  font-size: 12px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.postStats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.statGroup {
+  display: flex;
+  gap: 16px;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.statItem:hover { color: #2b6e4f; }
+.deleteBtn { color: #cbd5e1; cursor: pointer; }
+.deleteBtn:hover { color: #e11d48; }
+
+.lentaHeader { 
+  margin-bottom: 32px; 
+}
+
+.lentaTitle { 
+  font-size: 32px;
+  font-weight: 500; 
+  color: #000; 
+  margin-bottom: 8px; 
+}
+.counterWrapper { margin-bottom: 24px; color: #64748b; font-size: 14px; }
+.counterNumber { font-weight: 700; color: #2b6e4f; }
