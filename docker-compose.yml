@@ -17,7 +17,7 @@ services:
       - ./backend:/app
     env_file:
       - .env
-    entrypoint: ["uv run ./src/main.py"]
+    entrypoint: ["uv", "run", "./src/main.py"]
     depends_on:
       db:
         condition: service_started

@@ -1,9 +1,9 @@
 import { LuPawPrint } from "react-icons/lu";
-import { AuthCard, AuthHeader, AuthFooter } from "../../components/auth";
-import { TextField } from "../../components/ui/text-field";
-import { Button } from "../../components/ui/button";
-import { useAuth } from "../../contexts";
-import { useForm } from "../../hooks";
+import { AuthCard, AuthHeader, AuthFooter } from "@components/auth";
+import { TextField } from "@components/ui/text-field";
+import { Button } from "@components/ui/button";
+import { useAuth } from "@contexts";
+import { useForm } from "@hooks";
 
 const loginWrapper = {
   display: 'flex',
