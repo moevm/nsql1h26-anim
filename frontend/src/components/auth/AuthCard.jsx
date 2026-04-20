@@ -12,11 +12,16 @@ const cardStyle = {
 
 export const AuthCard = ({
   children,
-  className
+  className,
+  onSubmit
 }) => {
   return (
-    <div style ={cardStyle} className={className}>
+    <form 
+      style ={cardStyle} 
+      className={className}
+      onSubmit={onSubmit}  
+    >
       {children}
-    </div>
+    </form>
   );
 }

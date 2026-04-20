@@ -1,0 +1,94 @@
+.dropdown {
+  position: relative;
+}
+
+.dropdown-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: transparent;
+}
+
+.dropdown-button:hover {
+  background-color: #e5e5e5;
+}
+
+.dropdown-menu {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  min-width: 48px;
+  background-color: #fff;
+  border-radius: 8px;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.dropdown-menu-bottom {
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+}
+
+.dropdown-menu-top {
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 8px;
+}
+
+.dropdown-menu-right {
+  top: 0;
+  left: 100%;
+  margin-left: 8px;
+}
+
+.dropdown-menu-left {
+  top: 0;
+  right: 100%;
+  margin-right: 8px;
+}
+
+
+.dropdown-menu-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-wrap: nowrap;
+  gap: 4px;
+  padding: 10px;
+  background-color: transparent;
+  width: 100%;
+}
+
+.dropdown-menu-item:hover {
+  background-color: #e5e5e5;
+}
+
+
+.dropdown-menu-item:last-child .item-label {
+  color: #c0392b;
+}
+
+.dropdown-menu-item:last-child .item-icon {
+  color: #c0392b;
+}
+
+.dropdown-menu-item:last-child:hover {
+  background-color: #fee;
+}
+
+.item-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.item-icon {
+  display: flex;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+  color: #666;
+}
