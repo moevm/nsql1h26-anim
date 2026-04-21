@@ -91,8 +91,6 @@ async def get_by_id(post_id: str) -> PostFull | None:
   OPTIONAL MATCH (p)-[:OBSERVED]->(a:Animal)
   OPTIONAL MATCH (a)-[:BELONGED_TO]->(leaf:Taxon)
   OPTIONAL MATCH (leaf)<-[:PARENT_OF*0..6]-(ancestor:Taxon)
-  OPTIONAL MATCH (p)<-[:LIKED]-(l:User)
-  OPTIONAL MATCH (me:User {id: $current_user_id})-[my_like:LIKED]->(p)
   RETURN
     p, u,
     collect(DISTINCT t.name) AS tags,
@@ -126,19 +124,15 @@ async def get_all() -> list[PostFull]:
   results = await db.query(query)
   return [_map_row_to_post_full(row) for row in results]
 
-async def toggle_like(user_id: str, post_id: str) -> bool:
-    query = """
-    MATCH (u:User {id: $user_id})
-    MATCH (p:Post {id: $post_id})
-    OPTIONAL MATCH (u)-[r:LIKED]->(p)
-    WITH u, p, r
-    CALL apoc.do.when(
-        r IS NOT NULL,
-        'DELETE r RETURN false AS liked',
-        'CREATE (u)-[:LIKED {created_at: datetime()}]->(p) RETURN true AS liked',
-        {r: r, u: u, p: p}
-    ) YIELD value
-    RETURN value.liked as liked
-    """
-    result = await db.query(query, user_id=user_id, post_id=post_id)
-    return result[0]['liked']
+async def delete_post(post_id: str) -> bool:
+  query = """
+  MATCH (p:Post {id: $post_id})
+  DETACH DELETE p
+  RETURN count(p) as deleted_count
+  """
+        
+  result = await db.query(query, post_id=post_id)
+        
+  if result and result[0].get("deleted_count", 0) > 0:
+    return True
+  return False

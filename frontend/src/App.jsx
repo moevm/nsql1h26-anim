@@ -4,8 +4,6 @@ import { FeedPage } from "@pages/feed/FeedPage";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute, PublicRoute } from "./components/route";
 import { useAuth } from "./contexts";
-import { IconButton } from "./components/ui/button";
-import { AiOutlineHeart, AiFillHeart } from 'react-icons/ai';
 
 export const App = () => { 
   const { loading, isAuthenticated } = useAuth()

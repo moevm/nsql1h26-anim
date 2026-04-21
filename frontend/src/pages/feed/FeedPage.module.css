@@ -4,7 +4,7 @@
   width: 100%;
   min-height: 100vh;
   align-items: center;
-  background-color: #f8faf9; /* Чуть более живой фон */
+  background-color: #f8faf9; 
 }
 
 .mainContent {
@@ -14,17 +14,16 @@
   box-sizing: border-box;
 }
 
-/* Сетка для постов как на фото */
 .postsList {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 32px;
 }
 
 .postCard {
   background: white;
-  border-radius: 16px; /* Чуть меньше скругление для строгости */
-  overflow: hidden; /* Чтобы картинка не вылезала */
+  border-radius: 16px; 
+  overflow: hidden; 
   border: 1px solid #eef3ef;
   display: flex;
   flex-direction: column;
@@ -36,12 +35,35 @@
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
 }
 
-/* Имитация картинки из референса */
-.postImageStub {
+.imageContainer {
   width: 100%;
-  height: 220px;
-  background: #eee;
+  height: 240px;
+  overflow: hidden;
+  background-color: #f1f5f9;
+}
+
+.postImage {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.postCard:hover .postImage {
+  transform: scale(1.05);
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 14px;
+  font-style: italic;
 }
 
 .cardBody {
@@ -83,7 +105,18 @@
   font-size: 18px;
   font-weight: 700;
   color: #1a2e25;
+  margin-bottom: 6px;
+}
+
+.animalTag {
+  display: inline-block;
+  font-size: 12px;
+  color: #386a51;
+  background: #ecfdf5;
+  padding: 2px 8px;
+  border-radius: 4px;
   margin-bottom: 10px;
+  font-weight: 600;
 }
 
 .postDescription {
@@ -91,9 +124,8 @@
   color: #64748b;
   line-height: 1.5;
   margin-bottom: 16px;
-  /* Ограничение текста до 2 строк */
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -149,6 +181,9 @@
 .deleteBtn:hover { color: #e11d48; }
 
 .lentaHeader { 
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   margin-bottom: 32px; 
 }
 
@@ -158,5 +193,187 @@
   color: #000; 
   margin-bottom: 8px; 
 }
+
+.lentaSubtitle {
+  color: #64748b;
+  margin: 0;
+}
+
 .counterWrapper { margin-bottom: 24px; color: #64748b; font-size: 14px; }
-.counterNumber { font-weight: 700; color: #2b6e4f; }
+.counterNumber { font-weight: 700; color: #2b6e4f; } 
+
+.addPost {
+  width: 240px;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background: white;
+  width: 100%;
+  max-width: 520px;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.modalTitleBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modalHeading {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.stepIndicator {
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.closeIconBtn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.typeSelector {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 14px;
+  margin-bottom: 24px;
+}
+
+.tabDefault, .tabActive {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tabDefault {
+  background: transparent;
+  color: #64748b;
+}
+
+.tabActive {
+  background: white;
+  color: #1e293b;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.fieldGroup {
+  margin-bottom: 20px;
+}
+
+.label {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 15px;
+}
+
+.textarea {
+  width: 100%;
+  height: 120px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 15px;
+  resize: none;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 32px;
+}
+
+.textBtn {
+  background: none;
+  border: none;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.primaryBtn {
+  background: #386a51;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.primaryBtn:hover {
+  background: #2d5541;
+}
+
+.primaryBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.loadingState {
+  text-align: center;
+  padding: 40px;
+  color: #64748b;
+}

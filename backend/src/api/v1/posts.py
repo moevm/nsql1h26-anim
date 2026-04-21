@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from schemas.response import PostResponse
 from schemas.request import PostCreate, PostUpdate
 from database.models import User
@@ -19,10 +19,14 @@ async def create_post(data: PostCreate, current_user: User = Depends(get_current
 async def get_posts():
   return await post_service.get_all()
 
-@router.post("/{post_id}/toggle-like")
-async def toggle_post_like(
-    post_id: str, 
-    current_user: User = Depends(get_current_user)
-):
-  liked = await post_service.toggle_like(post_id=post_id, user_id=current_user.id)
-  return {"is_liked": liked}
+@router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_post(post_id: str):
+  was_deleted = await post_service.delete_post(post_id)
+    
+  if not was_deleted:
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail=f"Пост с ID {post_id} не найден"
+    )
+    
+  return None
