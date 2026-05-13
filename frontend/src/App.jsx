@@ -4,6 +4,8 @@ import { FeedPage } from "@pages/feed/FeedPage";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute, PublicRoute } from "./components/route";
 import { useAuth } from "./contexts";
+import { PostDetailPage } from "@pages/post-detail";
+import { ProfilePage } from "@pages/profile";
 
 export const App = () => { 
   const { loading, isAuthenticated } = useAuth()
@@ -39,6 +41,30 @@ export const App = () => {
         element={
           <ProtectedRoute>
             <FeedPage/>
+          </ProtectedRoute>
+        }
+      />
+      <Route 
+        path="/post/:postId" 
+        element={
+          <ProtectedRoute>
+            <PostDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route 
+        path="/profile" 
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route 
+        path="/profile/:userId" 
+         element={
+          <ProtectedRoute>
+            <ProfilePage />
           </ProtectedRoute>
         }
       />

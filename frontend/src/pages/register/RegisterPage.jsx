@@ -43,7 +43,7 @@ export const RegisterPage = () => {
     const { repeatPassword, ...registerData} = values
 
     try {
-      await request('post', '/auth/register', registerData)
+      await request('post', 'auth/register', registerData)
       const loginCredentials = {
         identifier: registerData.email,
         password: registerData.password
