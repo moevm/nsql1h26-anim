@@ -1,18 +1,19 @@
 import axios from 'axios'
 
-const baseURL = "http://localhost:8000/api/v1"
+const baseURL = "/api/v1"
 
 export const api = axios.create({
   baseURL: baseURL,
   withCredentials: true
 })
 
+const refreshApi = axios.create({
+  baseURL,
+  withCredentials: true
+})
+
 const refreshTokens = async () => {
-  const response = await axios.post(
-    `${baseURL}/auth/refresh`,
-    {},
-    { withCredentials: true}
-  )
+  return await refreshApi.post('/auth/refresh', {})
 }
 
 api.interceptors.response.use(
@@ -49,7 +50,7 @@ export const request = async (
     });
     return response.data
   } catch (error) {
-    const errorMessage = error.response?.data?.detail
+    const errorMessage = error.response?.data?.detail || error.message || 'Неизвестная ошибка'
     throw errorMessage
   }
 }

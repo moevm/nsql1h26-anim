@@ -1,10 +1,187 @@
-.card {  
-  position: relative;
+.postCard {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #eef3ef;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.25);
-  border-radius: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  position: relative;
 }
 
-.
+.postCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.imageContainer {
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+  background-color: #f1f5f9;
+}
+
+.postImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.postCard:hover .postImage {
+  transform: scale(1.05);
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.cardBody {
+  padding: 20px;
+}
+
+.authorSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 10;
+  width: fit-content;
+  cursor: pointer;
+}
+
+.authorSection:hover .authorName {
+  color: #386a51;
+  text-decoration: underline;
+}
+
+.authorInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.authorName {
+  font-weight: 600;
+  font-size: 14px;
+  color: #2c4b3e;
+  transition: color 0.2s;
+}
+
+.postDate {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.postTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a2e25;
+  margin-bottom: 6px;
+}
+
+.animalTag {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #386a51;
+  background: #ecfdf5;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.scientificName {
+  color: #386a51;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.postDescription {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.hashtags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.hashtag {
+  font-size: 12px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.postStats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  position: relative;
+  z-index: 10;
+}
+
+.statGroup {
+  display: flex;
+  gap: 16px;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.statItem.liked {
+  color: #e11d48;
+}
+
+.statItem:hover {
+  color: #386a51;
+}
+
+.deleteBtn {
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-size: 18px;
+}
+
+.deleteBtn:hover {
+  color: #e11d48;
+}

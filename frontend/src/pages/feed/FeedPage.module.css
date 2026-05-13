@@ -1,379 +1,151 @@
 .feedWrapper {
-  display: flex;
-  flex-direction: column;
   width: 100%;
   min-height: 100vh;
-  align-items: center;
-  background-color: #f8faf9; 
+  background-color: #f8fafc;
 }
 
 .mainContent {
-  width: 100%;
   max-width: 1440px;
-  padding: 40px 24px;
-  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 40px 20px;
 }
 
-.postsList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 32px;
-}
-
-.postCard {
-  background: white;
-  border-radius: 16px; 
-  overflow: hidden; 
-  border: 1px solid #eef3ef;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.postCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-}
-
-.imageContainer {
-  width: 100%;
-  height: 240px;
-  overflow: hidden;
-  background-color: #f1f5f9;
-}
-
-.postImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.3s ease;
-}
-
-.postCard:hover .postImage {
-  transform: scale(1.05);
-}
-
-.imagePlaceholder {
-  width: 100%;
-  height: 240px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f1f5f9;
-  color: #94a3b8;
-  font-size: 14px;
-  font-style: italic;
-}
-
-.cardBody {
-  padding: 20px;
-}
-
-.authorSection {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.authorAvatar {
-  width: 36px;
-  height: 36px;
-  background: #4a7c66;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.authorName {
-  font-weight: 600;
-  font-size: 14px;
-  color: #2c4b3e;
-}
-
-.postDate {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.postTitle {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a2e25;
-  margin-bottom: 6px;
-}
-
-.animalTag {
-  display: inline-block;
-  font-size: 12px;
-  color: #386a51;
-  background: #ecfdf5;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-bottom: 10px;
-  font-weight: 600;
-}
-
-.postDescription {
-  font-size: 14px;
-  color: #64748b;
-  line-height: 1.5;
-  margin-bottom: 16px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.hashtags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.hashtag {
-  font-size: 12px;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 4px 10px;
-  border-radius: 6px;
-}
-
-.location {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #94a3b8;
-  font-size: 12px;
-  margin-bottom: 16px;
-}
-
-.postStats {
+.feedHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
+  align-items: flex-end;
+  margin-bottom: 32px;
 }
 
-.statGroup {
-  display: flex;
-  gap: 16px;
-}
-
-.statItem {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 14px;
-  color: #64748b;
-  cursor: pointer;
-}
-
-.statItem:hover { color: #2b6e4f; }
-.deleteBtn { color: #cbd5e1; cursor: pointer; }
-.deleteBtn:hover { color: #e11d48; }
-
-.lentaHeader { 
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 32px; 
-}
-
-.lentaTitle { 
+.headerInfo h1 {
   font-size: 32px;
-  font-weight: 500; 
-  color: #000; 
-  margin-bottom: 8px; 
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 8px;
 }
 
-.lentaSubtitle {
+.headerInfo p {
   color: #64748b;
-  margin: 0;
+  font-size: 16px;
 }
 
-.counterWrapper { margin-bottom: 24px; color: #64748b; font-size: 14px; }
-.counterNumber { font-weight: 700; color: #2b6e4f; } 
-
-.addPost {
-  width: 240px;
-}
-
-.modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
+.headerActions {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-  backdrop-filter: blur(4px);
-}
-
-.modalContent {
-  background: white;
-  width: 100%;
-  max-width: 520px;
-  border-radius: 24px;
-  padding: 32px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-}
-
-.modalHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.modalTitleBox {
-  display: flex;
-  align-items: center;
   gap: 12px;
 }
 
-.modalHeading {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 0;
-}
-
-.stepIndicator {
-  background: #f1f5f9;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.closeIconBtn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: #94a3b8;
-  cursor: pointer;
-}
-
-.typeSelector {
-  display: flex;
-  background: #f1f5f9;
-  padding: 4px;
-  border-radius: 14px;
-  margin-bottom: 24px;
-}
-
-.tabDefault, .tabActive {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 11px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tabDefault {
-  background: transparent;
-  color: #64748b;
-}
-
-.tabActive {
-  background: white;
-  color: #1e293b;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-.fieldGroup {
-  margin-bottom: 20px;
-}
-
-.label {
-  display: block;
-  font-size: 11px;
-  font-weight: 800;
-  color: #94a3b8;
-  margin-bottom: 8px;
-  letter-spacing: 0.5px;
-}
-
-.input {
-  width: 100%;
-  padding: 14px 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  font-family: inherit;
-  font-size: 15px;
-}
-
-.textarea {
-  width: 100%;
-  height: 120px;
-  padding: 14px 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  font-family: inherit;
-  font-size: 15px;
-  resize: none;
-}
-
-.modalFooter {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 32px;
-}
-
-.textBtn {
-  background: none;
-  border: none;
-  font-weight: 700;
-  color: #64748b;
-  cursor: pointer;
+.addBtn {
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.primaryBtn {
+  gap: 8px;
   background: #386a51;
   color: white;
   border: none;
-  padding: 12px 28px;
-  border-radius: 14px;
+  padding: 12px 24px;
+  border-radius: 12px;
   font-weight: 700;
-  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(56, 106, 81, 0.2);
+}
+
+.addBtn:hover {
+  background: #2d5641;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(56, 106, 81, 0.3);
+}
+
+.seedBtn {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  padding: 12px;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: background 0.2s;
+  transition: 0.2s;
 }
 
-.primaryBtn:hover {
-  background: #2d5541;
+.seedBtn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
 }
 
-.primaryBtn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+.postsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
 }
 
-.loadingState {
+.loader, .emptyState {
   text-align: center;
-  padding: 40px;
+  padding: 60px;
   color: #64748b;
+  font-size: 18px;
+  background: white;
+  border-radius: 20px;
+  border: 2px dashed #e2e8f0;
+}
+
+.loadMoreWrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+  padding-bottom: 40px;
+}
+
+.loadMoreBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  
+  background: white;
+  color: #386a51;
+  border: 2px solid #386a51;
+  
+  padding: 14px 40px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.loadMoreBtn:hover {
+  background: #386a51;
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(56, 106, 81, 0.2);
+}
+
+.loadMoreBtn:active {
+  transform: translateY(-1px);
+}
+
+.loader {
+  grid-column: 1 / -1;
+  margin: 20px 0;
+  border: none;
+  background: transparent;
+}
+
+@media (max-width: 768px) {
+  .feedHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  
+  .headerActions {
+    width: 100%;
+  }
+  
+  .addBtn {
+    flex: 1;
+    justify-content: center;
+  }
 }
