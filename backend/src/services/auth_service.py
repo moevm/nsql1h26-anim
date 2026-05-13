@@ -1,116 +1,92 @@
-from fastapi import HTTPException, status, Response
 from datetime import timedelta
-from services import user_service
-from database.models import User
-from schemas.request import RegisterRequest, LoginRequest
-from core.utils import create_token, decode_token, verify_password
+from fastapi import Response
 from core.config import settings
+from core.security import create_token, verify_password, hash_password, decode_token
+from core.exceptions import NotFoundException, BusinessRuleException, AppException, ErrorCode
+from repositories.user_repository import UserRepository
+from models.user import User
+from schemas.identity import RegisterRequest, LoginRequest
 
-async def _generate_auth_response(user: User, response: Response):
-  access_token = create_token(
-    id=user.id,
-    expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
-    token_type="access"
-  )  
-  
-  refresh_token = create_token(
-    id=user.id,
-    expires_delta= timedelta(days=settings.refresh_token_expire_days),
-    token_type="refresh"
-  )
+class AuthService:
+    def __init__(self, repo: UserRepository):
+        self.repo = repo
 
-  response.set_cookie(
-    key="refresh_token",
-    value=refresh_token,
-    httponly=True,
-    path="/api/v1/auth",
-    secure=True,
-    samesite="lax",
-    max_age=settings.refresh_token_expire_days * 24 * 3600
-  )
 
-  response.set_cookie(
-    key="access_token",
-    value=access_token,
-    httponly=True,
-    path="/",
-    secure=True,
-    samesite="lax",
-    max_age=settings.access_token_expire_minutes * 60
-  )
+    async def _generate_auth_response(self, user: User, response: Response) -> User:
+        access_token = create_token(
+            user_id=user.id,
+            expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
+            token_type="access",
+        )
+        refresh_token = create_token(
+            user_id=user.id,
+            expires_delta=timedelta(days=settings.refresh_token_expire_days),
+            token_type="refresh",
+        )
 
-  return user
+        params = {"httponly": True, "secure": True, "samesite": "lax"}
+        
+        response.set_cookie(
+            key="refresh_token", value=refresh_token, path="/api/v1/auth",
+            max_age=settings.refresh_token_expire_days * 86400, **params
+        )
+        response.set_cookie(
+            key="access_token", value=access_token, path="/",
+            max_age=settings.access_token_expire_minutes * 60, **params
+        )
+        return user
 
-async def register(data: RegisterRequest, response: Response):
-  if (await user_service.get_user_by_identifier(data.email)):
-    raise HTTPException(
-      status_code=status.HTTP_400_BAD_REQUEST,
-      detail="User with the email is already existed"
-    )
-  
-  if await user_service.get_user_by_identifier(data.username):
-    raise HTTPException(
-      status_code=status.HTTP_400_BAD_REQUEST,
-      detail="This username is already taken"
-    )
 
-  user = await user_service.create_user(data)
+    async def register(self, data: RegisterRequest, response: Response) -> User:
+        user_node = User(
+            **data.model_dump(exclude={"password"}),
+            password=hash_password(data.password)
+        )
+        props = user_node.model_dump(exclude={
+            "is_followed", 
+            "followers_count", 
+            "following_count",
+            
+        })
+        user = await self.repo.create(user_node.model_dump())
+        return await self._generate_auth_response(user, response)
 
-  return await _generate_auth_response(user, response)
 
-async def login(data: LoginRequest, response: Response):
-  identifier = data.identifier
-  password = data.password
+    async def login(self, data: LoginRequest, response: Response) -> User:
+        user = await self.repo.get_by_identifier(data.identifier)
+        if not user or not verify_password(data.password, user.password):
+            raise BusinessRuleException(detail="Invalid credentials", code=ErrorCode.UNAUTHORIZED)
+        
+        return await self._generate_auth_response(user, response)
 
-  user = await user_service.get_user_by_identifier(identifier)
 
-  if not user or not verify_password(password, user.password):
-    raise HTTPException(
-      status_code=status.HTTP_401_UNAUTHORIZED,
-      detail="Invalid login or password"
-    )
+    async def logout(response: Response):
+        response.delete_cookie(
+            key="refresh_token",
+            httponly=True,
+            path="/api/v1/auth",
+            samesite="lax",
+            secure=True
+        )
+        
+        response.delete_cookie(
+            key="access_token",
+            httponly=True,
+            path="/",
+            samesite="lax",
+            secure=True
+        )
 
-  return await _generate_auth_response(user, response)
+    async def refresh(self, token: str | None, response: Response) -> User:
+        if not token:
+            raise AppException(detail="Token missing", code="missing_token", status=401)
+        
+        payload = decode_token(token)
+        if not payload or payload.type != "refresh":
+            raise AppException(detail="Invalid token", code="invalid_token", status=401)
 
-async def logout(response: Response):
-  response.delete_cookie(
-    key="refresh_token",
-    httponly=True,
-    path="/api/v1/auth",
-    samesite="lax",
-    secure=True
-  )
-  
-  response.delete_cookie(
-    key="access_token",
-    httponly=True,
-    path="/",
-    samesite="lax",
-    secure=True
-  )
-
-  return {"detail": "Successfully logged out"}
-
-async def refresh(refresh_token: str | None, response: Response):
-  if not refresh_token:
-    raise HTTPException(
-      status_code=status.HTTP_401_UNAUTHORIZED, 
-      detail="Refresh token missing"
-    )
-  
-  payload = decode_token(refresh_token)
-
-  if not payload or payload.type != 'refresh':
-    raise HTTPException(
-      status_code=status.HTTP_401_UNAUTHORIZED, 
-      detail="Invalid credentials"
-    )
-  
-  user = await user_service.get_user_by_id(payload.sub)
-  if not user:
-    raise HTTPException(
-      status_code=status.HTTP_404_NOT_FOUND, 
-      detail="User not found"
-    )
-
-  return await _generate_auth_response(user, response)
+        user = await self.repo.get_by_id(payload.sub)
+        if not user:
+            raise NotFoundException(entity="user")
+            
+        return await self._generate_auth_response(user, response)
