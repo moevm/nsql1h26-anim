@@ -10,7 +10,7 @@ services:
 
     volumes:
       - neo4j_data:/data
-      - neo4j_import:/import
+      - neo4j_import:/import:ro
     healthcheck:
       test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "RETURN 1"]
       interval: 10s
