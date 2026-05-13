@@ -36,4 +36,3 @@ volumes:
   neo4j_logs:
   neo4j_plugins:
   neo4j_import:
-
