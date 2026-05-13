@@ -1,0 +1,18 @@
+FROM ghcr.io/astral-sh/uv:python3.14-alpine3.23
+
+WORKDIR /app
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY pyproject.toml uv.lock ./
+
+
+RUN uv sync --frozen --no-dev --no-install-project
+
+COPY src ./src
+
+RUN uv sync --frozen --no-dev
+
+EXPOSE 8000
+
+CMD ["uv", "run", "--frozen", "src/main.py"]
