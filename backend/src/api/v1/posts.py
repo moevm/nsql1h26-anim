@@ -1,32 +1,60 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from schemas.response import PostResponse
-from schemas.request import PostCreate, PostUpdate
-from database.models import User
-from services import post_service
-from api.deps import get_current_user
+# routers/posts.py
+from fastapi import APIRouter, Depends, status
+from typing import Annotated
 
-router = APIRouter()
+from schemas.post import PostCreate, PostUpdate, PostResponse, PostDetailResponse
+from schemas.pagination import PostPaginationParams, PaginatedResponse
+from services.post_service import PostService
+from api.deps import get_post_service, get_current_user_id
 
-@router.post("/", response_model=PostResponse)
-async def create_post(data: PostCreate, current_user: User = Depends(get_current_user)):
-  try:
-    return await post_service.create_post(data, author_id=current_user.id)
-  except Exception as e:
-    print(e)
-    raise HTTPException(status_code=500, detail=str(e))
+router = APIRouter(prefix="/posts", tags=["posts"])
 
-@router.get("/", response_model=list[PostResponse])
-async def get_posts():
-  return await post_service.get_all()
+@router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
+async def create_post(
+    schema: PostCreate,
+    service: Annotated[PostService, Depends(get_post_service)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
+):
+    return await service.create_post(schema, user_id)
+
+@router.get("", response_model=PaginatedResponse[PostResponse])
+async def get_feed(
+    params: Annotated[PostPaginationParams, Depends()],
+    service: Annotated[PostService, Depends(get_post_service)],
+    user_id: Annotated[str | None, Depends(get_current_user_id)]
+):
+    return await service.get_feed(params, user_id)
+
+@router.get("/{post_id}", response_model=PostDetailResponse)
+async def get_post_detail(
+    post_id: str,
+    service: Annotated[PostService, Depends(get_post_service)],
+    user_id: Annotated[str | None, Depends(get_current_user_id)]
+):
+    return await service.get_post(post_id, user_id)
+
+@router.patch("/{post_id}", response_model=PostResponse)
+async def update_post(
+    post_id: str,
+    schema: PostUpdate,
+    service: Annotated[PostService, Depends(get_post_service)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
+):
+    return await service.update_post(post_id, schema, user_id)
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_post(post_id: str):
-  was_deleted = await post_service.delete_post(post_id)
-    
-  if not was_deleted:
-    raise HTTPException(
-      status_code=status.HTTP_404_NOT_FOUND,
-      detail=f"Пост с ID {post_id} не найден"
-    )
-    
-  return None
+async def delete_post(
+    post_id: str,
+    service: Annotated[PostService, Depends(get_post_service)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
+):
+    await service.delete_post(post_id, user_id)
+
+@router.post("/{post_id}/like")
+async def toggle_post_like(
+    post_id: str,
+    service: Annotated[PostService, Depends(get_post_service)],
+    user_id: Annotated[str, Depends(get_current_user_id)]
+):
+    liked = await service.toggle_like(post_id, user_id)
+    return {"liked": liked}

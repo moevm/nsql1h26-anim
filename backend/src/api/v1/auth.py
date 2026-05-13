@@ -1,23 +1,39 @@
-from fastapi import APIRouter, Response, Request
-from services import auth_service
-from schemas.response import UserResponse
-from schemas.request import RegisterRequest, LoginRequest
+from fastapi import APIRouter, Depends, Response, Cookie, status
+from typing import Annotated
 
-router = APIRouter()
+from schemas.identity import RegisterRequest, LoginRequest, UserResponse
+from services.auth_service import AuthService
+from api.deps import get_auth_service
 
-@router.post("/register", response_model=UserResponse)
-async def register_route(data: RegisterRequest, response: Response):
-  return await auth_service.register(data, response)
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def register(
+    data: RegisterRequest, 
+    response: Response,
+    service: Annotated[AuthService, Depends(get_auth_service)]
+):
+    return await service.register(data, response)
 
 @router.post("/login", response_model=UserResponse)
-async def login_route(data: LoginRequest, response: Response):
-  return await auth_service.login(data, response)
+async def login(
+    data: LoginRequest, 
+    response: Response,
+    service: Annotated[AuthService, Depends(get_auth_service)]
+):
+    return await service.login(data, response)
 
 @router.post("/logout")
-async def logout_route(response: Response):
-  return await auth_service.logout(response)
+async def logout(
+    response: Response,
+    service: Annotated[AuthService, Depends(get_auth_service)]
+):
+    return await service.logout(response)
 
 @router.post("/refresh", response_model=UserResponse)
-async def refresh_route(request: Request, response: Response):
-  refresh_token = request.cookies.get("refresh_token")
-  return await auth_service.refresh(refresh_token, response)
+async def refresh(
+    response: Response,
+    service: Annotated[AuthService, Depends(get_auth_service)],
+    refresh_token: str | None = Cookie()
+):
+    return await service.refresh(refresh_token, response)

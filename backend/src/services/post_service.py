@@ -1,138 +1,99 @@
-from schemas.base import PostType
-from schemas.request import PostCreate
-from core.utils import get_now_iso, generate_uid
-from services import taxon_service, animal_service, tag_service
-from database.db import db
-from database.models import User, PostFull, Animal, Taxon
+from repositories.post_repository import PostRepository
+from models.post import PostType
+from schemas.post import PostCreate, PostUpdate, PostResponse, PostDetailResponse
+from schemas.pagination import PostPaginationParams, PaginatedResponse
+from core.exceptions import NotFoundException
+from core.utils import generate_uid, get_now
 
-def _map_row_to_post_full(row: dict) -> PostFull:
-  taxons = []
-  for node in row.get("taxonomy_chain", []):
-    if node and node.get("id"):
-      taxons.append(Taxon(
-        id=node["id"], 
-        name=node["name"], 
-        rank=node["rank"]
-    ))
-            
-  return PostFull(
-    **row["p"],
-    author=User(**row["u"]),
-    animal=Animal(**row["a"]) if row.get("a") else None,
-    taxonomy_chain=taxons,
-    tags=row.get("tags", [])
-  )
 
-async def create_post(data: PostCreate, author_id: str) -> PostFull:
-  try:
-    now = get_now_iso()
-    post_id = generate_uid()
-    animal_id = None
+class PostService:
+    def __init__(self, repo: PostRepository):
+        self.repo = repo
 
-    if data.type == PostType.animal and data.taxon and data.animal:
-      taxon = await taxon_service.merge_taxon(data.taxon)
-      animal = await animal_service.create_animal(data.animal, taxon.id)
-      animal_id = animal.id
-        
-    await tag_service.merge_tags(data.tags)
+    async def create_post(self, schema: PostCreate, author_id: str) -> PostResponse:
+        data = schema.model_dump(exclude_unset=True)
+        tags = data.pop("tags", [])
+        animal_data = data.pop("animal", None)
 
-    post_data = {
-      "id": post_id,
-      "title": data.title,
-      "content": data.content,
-      "image_url": data.image_url,
-      "location": data.location,
-      "type": data.type,
-      "created_at": now,
-      "updated_at": now
-    }
+        now = get_now()
+        props = {**data, "id": generate_uid(), "created_at": now, "updated_at": now}
 
-    query = """
-    MATCH (u:User {id: $author_id})
-    CREATE (p:Post)
-    SET p = $post_data
-    CREATE (u)-[:AUTHORED]->(p)
+        animal_props = None
+        if schema.type == PostType.ANIMAL and animal_data:
+            animal_props = {**animal_data, "id": generate_uid()}
 
-    WITH p
-    OPTIONAL MATCH (t:Tag) WHERE t.name IN $tags
-    FOREACH (tag IN CASE WHEN t IS NOT NULL THEN [t] ELSE [] END |
-      MERGE (p)-[:TAGGED]->(tag)
-    )
+        raw = await self.repo.create_post(
+            props=props,
+            author_id=author_id,
+            tags=tags or None,
+            animal_props=animal_props,
+        )
+        return PostResponse.model_validate(raw)
 
-    WITH p
-    OPTIONAL MATCH (a:Animal {id: $animal_id})
-    FOREACH (_ IN CASE WHEN a IS NOT NULL THEN [1] ELSE [] END |
-      MERGE (p)-[:OBSERVED]->(a)
-    )
-        
-    RETURN p.id AS id
-    """
 
-    result = await db.query(
-      query,
-      author_id=author_id,
-      post_data=post_data,
-      tags=data.tags,
-      animal_id=animal_id
-    )
+    async def get_post(self, post_id: str, current_user_id: str | None = None) -> PostDetailResponse:
+        raw = await self.repo.get_post(post_id, current_user_id)
+        if not raw:
+            raise NotFoundException(entity="Post")
+        return PostDetailResponse.model_validate(raw)
 
-    if not result:
-      raise ValueError(f"User with id {author_id} not found. Register first!")
 
-    return await get_by_id(post_id)
-  except Exception as e:
-    print(f"CRITICAL ERROR IN CREATE_POST: {e}")
-    raise e
-    
-async def get_by_id(post_id: str) -> PostFull | None:
-  query = """
-  MATCH (u:User)-[:AUTHORED]->(p:Post {id: $post_id})
-  OPTIONAL MATCH (p)-[:TAGGED]->(t:Tag)  
-  OPTIONAL MATCH (p)-[:OBSERVED]->(a:Animal)
-  OPTIONAL MATCH (a)-[:BELONGED_TO]->(leaf:Taxon)
-  OPTIONAL MATCH (leaf)<-[:PARENT_OF*0..6]-(ancestor:Taxon)
-  RETURN
-    p, u,
-    collect(DISTINCT t.name) AS tags,
-    a,
-    collect(DISTINCT ancestor) AS taxonomy_chain
-  """
+    async def get_feed(
+        self,
+        params: PostPaginationParams,
+        current_user_id: str | None = None,
+    ) -> PaginatedResponse[PostResponse]:
+        paginated = await self.repo.get_feed(params, current_user_id)
+        return PaginatedResponse(
+            items=[PostResponse.model_validate(item) for item in paginated.items],
+            total=paginated.total,
+            limit=paginated.limit,
+            offset=paginated.offset,
+            has_more=paginated.has_more,
+        )
 
-  result = await db.query(query, post_id=post_id)
-  if not result or not result[0].get('p'):
-    return None
-  return _map_row_to_post_full(result[0])
 
-async def get_all() -> list[PostFull]:
-  query = """
-  MATCH (u:User)-[:AUTHORED]->(p:Post)
-  OPTIONAL MATCH (p)-[:TAGGED]->(t:Tag)
-  OPTIONAL MATCH (p)-[:OBSERVED]->(a:Animal)
-  OPTIONAL MATCH (a)-[:BELONGED_TO]->(leaf:Taxon)
-  OPTIONAL MATCH (leaf)<-[:PARENT_OF*0..6]-(ancestor:Taxon)
-    
-  WITH p, u, a, 
-    collect(DISTINCT t.name) AS tags,
-    collect(DISTINCT ancestor) AS taxons
-    
-  RETURN 
-    p, u, a, tags,
-    [n IN taxons | {id: n.id, name: n.name, rank: n.rank}] AS taxonomy_chain
-    ORDER BY p.created_at DESC
-    """
-    
-  results = await db.query(query)
-  return [_map_row_to_post_full(row) for row in results]
+    async def update_post(
+        self, 
+        post_id: str, 
+        schema: PostUpdate, 
+        current_user_id: str
+    ) -> PostResponse:
+        data = schema.model_dump(exclude_unset=True)
+        tags = data.pop("tags", None)
+        animal_data = data.pop("animal", None)
 
-async def delete_post(post_id: str) -> bool:
-  query = """
-  MATCH (p:Post {id: $post_id})
-  DETACH DELETE p
-  RETURN count(p) as deleted_count
-  """
-        
-  result = await db.query(query, post_id=post_id)
-        
-  if result and result[0].get("deleted_count", 0) > 0:
-    return True
-  return False
+        props = {**data, "updated_at": get_now()}
+
+        animal_props = None
+        detach_animal = False
+        if "animal" in schema.model_fields_set:
+            if animal_data is None:
+                detach_animal = True
+            else:
+                animal_props = {k: v for k, v in animal_data.items() if v is not None}
+                if "scientific_name" not in animal_props:
+                    animal_props["scientific_name"] = animal_props.get("name", generate_uid())
+
+        raw = await self.repo.update_post_safe(
+            post_id=post_id,
+            props=props,
+            current_user_id=current_user_id,
+            tags=tags,
+            animal_props=animal_props,
+            detach_animal=detach_animal,
+        )
+        if not raw:
+            raise NotFoundException(entity="Post")
+        return PostResponse.model_validate(raw)
+
+
+    async def delete_post(self, post_id: str, current_user_id: str) -> bool:
+        return await self.repo.delete_post_safe(post_id, current_user_id)
+
+
+    async def toggle_like(self, post_id: str, user_id: str) -> bool:
+        result = await self.repo.toggle_like(post_id, user_id)
+        if not result:
+            raise NotFoundException(entity="Post")
+        return result
