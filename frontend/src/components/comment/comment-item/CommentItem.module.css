@@ -1,0 +1,162 @@
+.commentItem {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.commentBody {
+  flex: 1;
+}
+
+.commentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.commentAuthor {
+  font-weight: 600;
+  font-size: 14px;
+  color: #2c4b3e;
+}
+
+.commentMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.commentDate {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.commentDelete {
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 15px;
+  transition: color 0.15s;
+}
+
+.commentDelete:hover {
+  color: #e11d48;
+}
+
+.commentEdit {
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 15px;
+  transition: color 0.15s;
+}
+
+.commentEdit:hover {
+  color: #386a51;
+}
+
+.editForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.editInput {
+  flex: 1;
+  border: 1.5px solid #386a51;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 14px;
+  outline: none;
+  color: #1e293b;
+}
+
+.editActions {
+  display: flex;
+  gap: 4px;
+}
+
+.editConfirm {
+  background: #386a51;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.editConfirm:disabled {
+  opacity: 0.5;
+}
+
+.editCancelBtn {
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.editCancelBtn:hover {
+  background: #e2e8f0;
+}
+
+.commentText {
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.55;
+  margin: 0 0 8px;
+}
+
+.commentActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.commentLike {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.commentLiked {
+  color: #e11d48;
+}
+
+.replyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.commentReply {
+  padding-left: 16px;
+  border-left: 2px solid #eef3ef;
+  margin-top: 12px;
+}
+
+.repliesList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}

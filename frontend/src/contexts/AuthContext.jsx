@@ -19,7 +19,7 @@ export const AuthProvider = ({
 
     const initAuth = async () => {
       try {
-        const userData = await request('get', '/users/me')
+        const userData = await request('get', 'users/me')
         setUser(userData)
       } catch (e) {
         setUser(null)
@@ -36,12 +36,12 @@ export const AuthProvider = ({
   }, [])
 
   const login = async (data) => {
-    const res = await request('post', '/auth/login', data)
+    const res = await request('post', 'auth/login', data)
     setUser(res)
   }
 
   const logout = async () => {
-    await request('post', '/auth/logout').catch(() => {})
+    await request('post', 'auth/logout').catch(() => {})
     setUser(null)
   }
 

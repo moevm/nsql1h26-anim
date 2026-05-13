@@ -27,38 +27,51 @@ export const Dropdown = ({
     }
   }, [isOpen])
   
-  const handleClick = () => {
-    setIsOpen(!isOpen)
+  const toggleDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(prev => !prev);
   }
 
   return (
-    <div className={styles['dropdown']} ref={dropdownRef}>
-      <button 
-        className={styles['dropdown-button']}
-        onClick={handleClick}
+    <div className={styles.dropdown} ref={dropdownRef}>
+      <div 
+        className={styles['dropdown-trigger']} 
+        onClick={toggleDropdown}
       >
-        {trigger} 
-        {isOpen ? <RiArrowDropDownLine size={20}/> : <RiArrowDropUpLine size={20}/>}
-      </button>
+        <div className={styles['trigger-content']}>
+          {trigger}
+        </div>
+        <div className={styles['arrow-icon']}>
+          {isOpen ? <RiArrowDropUpLine size={24}/> : <RiArrowDropDownLine size={24}/>}
+        </div>
+      </div>
+
       {isOpen && (
         <div className={`
           ${styles['dropdown-menu']} 
           ${styles[`dropdown-menu-${position}`]}
         `}>
           {items.map((item, index) => {
+            const content = (
+              <>
+                {item.icon && <div className={styles['item-icon']}>{item.icon}</div>}
+                <span className={styles['item-label']}>{item.label}</span>
+              </>
+            );
+
             if (item.onClick) {
               return (
                 <div 
                   key={index} 
                   className={styles['dropdown-menu-item']}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     item.onClick();
                     setIsOpen(false);
                   }}
-                  style={{ cursor: 'pointer' }}
                 >
-                  {item.icon && <div className={styles['item-icon']}>{item.icon}</div>}
-                  <span className={styles['item-label']}>{item.label}</span>
+                  {content}
                 </div>
               )
             }
@@ -68,10 +81,9 @@ export const Dropdown = ({
                 to={item.to} 
                 key={index} 
                 className={styles['dropdown-menu-item']}
-                onClick={() =>  setIsOpen(false)}
+                onClick={() => setIsOpen(false)}
               >
-                {item.icon && <div className={styles['item-icon']}>{item.icon}</div>}
-                <span className={styles['item-label']}>{item.label}</span>
+                {content}
               </Link>
             )
           })}

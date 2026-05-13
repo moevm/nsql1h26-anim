@@ -1,0 +1,66 @@
+.replyForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #f8faf9;
+  border-radius: 12px;
+  border: 1px solid #eef3ef;
+}
+
+.replyInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  color: #1a2e25;
+}
+
+.replyInput::placeholder {
+  color: #94a3b8;
+}
+
+.replyActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.replySubmit {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: #386a51;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.replySubmit:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sendIcon {
+  transform: rotate(90deg);
+}
+
+.replyCancel {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
