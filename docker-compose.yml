@@ -28,8 +28,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-    - ./backend/backups:/app/backups:ro
     ports:
       - "127.0.0.1:8000:8000"
     restart: unless-stopped
