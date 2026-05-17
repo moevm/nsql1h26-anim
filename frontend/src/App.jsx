@@ -6,6 +6,7 @@ import { ProtectedRoute, PublicRoute } from "./components/route";
 import { useAuth } from "./contexts";
 import { PostDetailPage } from "@pages/post-detail";
 import { ProfilePage } from "@pages/profile";
+import { StatsPage } from "@pages/stats";
 
 export const App = () => { 
   const { loading, isAuthenticated } = useAuth()
@@ -65,6 +66,14 @@ export const App = () => {
          element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route 
+        path="/stats" 
+         element={
+          <ProtectedRoute>
+            <StatsPage />
           </ProtectedRoute>
         }
       />

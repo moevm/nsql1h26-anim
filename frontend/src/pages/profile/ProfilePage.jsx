@@ -5,7 +5,7 @@ import { request } from '@api/axios';
 import { Header } from '@components/header';
 import { ProfileHeader, ProfileStats } from '@components/profile';
 import { PostCard } from '@components/post/post-card/PostCard';
-import { UserCard } from '@components/user-card'; // Импорт согласно структуре
+import { UserCard } from '@components/user-card';
 import styles from './ProfilePage.module.css';
 
 export const ProfilePage = () => {
@@ -78,7 +78,6 @@ export const ProfilePage = () => {
     }
   };
 
-  // Логика подписки для шапки профиля
   const handleFollow = async () => {
     if (followLoading) return;
     setFollowLoading(true);
@@ -92,18 +91,15 @@ export const ProfilePage = () => {
     }
   };
 
-  // Логика подписки для карточек в списке (followers/following)
   const handleFollowUser = async (targetId) => {
     try {
       await request('post', `users/${targetId}/follow`);
-      // Локально обновляем статус в списке, чтобы не перезагружать всё API
       setTabData(prev => ({
         ...prev,
         items: prev.items.map(item => 
           item.id === targetId ? { ...item, isFollowed: !item.isFollowed } : item
         )
       }));
-      // Если мы смотрим свой профиль, нужно обновить счетчики в ProfileStats
       if (isOwn) fetchUser();
     } catch (err) {
       console.error("Error toggling follow", err);

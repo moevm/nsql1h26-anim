@@ -37,3 +37,6 @@ class UserConst:
 class AnimalConst:
     DEFAULT_LIMIT: Final = 20
     MAX_LIMIT: Final = 100
+
+class SystemConst:
+    MAX_IMPORT_FILE_BYTES: Final = 100 * 1024 * 1024

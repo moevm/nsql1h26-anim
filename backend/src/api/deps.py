@@ -10,11 +10,13 @@ from repositories.post_repository import PostRepository
 from repositories.comment_repository import CommentRepository
 from repositories.tag_repository import TagRepository
 from repositories.animal_repository import AnimalRepository
+from repositories.stats_repository import StatsRepository
 
 from services.auth_service import AuthService
 from services.user_service import UserService
 from services.post_service import PostService
 from services.comment_service import CommentService
+from services.stats_service import StatsService
 
 from models.user import User
 
@@ -33,6 +35,9 @@ def get_tag_repo() -> TagRepository:
 
 def get_animal_repo() -> AnimalRepository:
     return AnimalRepository(db)
+
+def get_stats_repo() -> StatsRepository:
+    return StatsRepository(db)
 
 
 def get_auth_service(
@@ -59,22 +64,28 @@ def get_comment_service(
     return CommentService(repo)
 
 
+def get_stats_service(
+    repo: Annotated[StatsRepository, Depends(get_stats_repo)]
+) -> StatsService:
+    return StatsService(repo)
+
+
 async def get_current_user(
     repo: Annotated[UserRepository, Depends(get_user_repo)],
     access_token: Annotated[str | None, Cookie()] = None
 ) -> User:
     if not access_token:
         raise AppException(
-            detail="Not authenticated", 
-            code="not_authenticated", 
+            detail="Not authenticated",
+            code="not_authenticated",
             status=401
         )
 
     payload = decode_token(access_token)
     if not payload or payload.type != "access":
         raise AppException(
-            detail="Invalid or expired token", 
-            code=ErrorCode.UNAUTHORIZED, 
+            detail="Invalid or expired token",
+            code=ErrorCode.UNAUTHORIZED,
             status=401
         )
 

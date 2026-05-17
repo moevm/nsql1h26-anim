@@ -1,0 +1,244 @@
+.wrapper {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
+.main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.pageHeader {
+  margin-bottom: 32px;
+}
+
+.pageHeader h1 {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.pageHeader p {
+  color: #64748b;
+  font-size: 16px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.tab,
+.tabActive {
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid #e2e8f0;
+  transition: all 0.2s;
+}
+
+.tab {
+  background: #fff;
+  color: #64748b;
+}
+
+.tab:hover {
+  border-color: #386a51;
+  color: #386a51;
+}
+
+.tabActive {
+  background: #386a51;
+  color: #fff;
+  border-color: #386a51;
+  box-shadow: 0 4px 12px rgba(56, 106, 81, 0.2);
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-bottom: 28px;
+  border: 1px solid #e2e8f0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 0 -32px;
+}
+
+.filtersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filterGroup label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filterGroup input,
+.filterGroup select {
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  background: #f8fafc;
+  color: #1e293b;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filterGroup input:focus,
+.filterGroup select:focus {
+  outline: none;
+  border-color: #386a51;
+  box-shadow: 0 0 0 3px rgba(56, 106, 81, 0.1);
+  background: #fff;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.buildBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #386a51;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(56, 106, 81, 0.2);
+}
+
+.buildBtn:hover:not(:disabled) {
+  background: #2d5641;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(56, 106, 81, 0.3);
+}
+
+.buildBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.resetBtn {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  color: #64748b;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.resetBtn:hover {
+  border-color: #386a51;
+  color: #386a51;
+  background: #f0faf5;
+}
+
+.error {
+  color: #e11d48;
+  font-size: 0.9rem;
+  padding: 12px 16px;
+  background: #fff1f2;
+  border-radius: 10px;
+  border: 1.5px solid #fecdd3;
+  font-weight: 500;
+}
+
+.chartCard {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.chartTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.empty {
+  text-align: center;
+  padding: 60px;
+  color: #64748b;
+  font-size: 18px;
+  background: white;
+  border-radius: 20px;
+  border: 2px dashed #e2e8f0;
+}
+
+@media (max-width: 768px) {
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .filtersGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .buildBtn,
+  .resetBtn {
+    justify-content: center;
+    text-align: center;
+  }
+}

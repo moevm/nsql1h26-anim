@@ -17,7 +17,7 @@ from services.system_service import SystemService
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.init_db()
-    await SystemService(db).restore_if_empty()
+    await SystemService(db).restore_initial_if_empty()
     yield
     await db.close()
 

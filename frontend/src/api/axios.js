@@ -38,19 +38,16 @@ api.interceptors.response.use(
 export const request = async (
   method,
   url,
-  data = {}
+  data = null,
+  config = {}
 ) => {
-  try {
-    const isGet = method.toLowerCase() === 'get'
-    const response = await api({
-      method,
-      url,
-      params: isGet ? data : null,
-      data: isGet ? null : data
-    });
-    return response.data
-  } catch (error) {
-    const errorMessage = error.response?.data?.detail || error.message || 'Неизвестная ошибка'
-    throw errorMessage
-  }
+  const isGet = method.toLowerCase() === 'get'
+  const response = await api({
+    method,
+    url,
+    params: isGet ? data : null,
+    data: isGet ? null : data,
+    ...config
+  });
+  return response.data
 }
